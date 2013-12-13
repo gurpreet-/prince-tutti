@@ -8,7 +8,8 @@ import pyglet
 def begin_game():
     pass
 
-
+# Load the resources from the following folders,
+# then re-index the file resource locations.
 def load_resources():
     pyglet.resource.path = ["res", "res/images", "res/videos"]
     pyglet.resource.reindex()
@@ -16,6 +17,9 @@ def load_resources():
 
 def load_intro_video():
     pass
+
+def move_ball(dt):
+    ball.x += dt * 50
 #################################################
 
 
@@ -56,6 +60,10 @@ def on_key_press(symbol, modifiers):
         window.set_caption("Changed caption, skipped video")
         if player.playing:
             player.next()
+            
+    if symbol == key.RIGHT:
+        pyglet.clock.schedule_interval(move_ball, 1/60)
+        
 
     if symbol == key.ENTER: # When they press enter, maximise the window
         if window.fullscreen:
