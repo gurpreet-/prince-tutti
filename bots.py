@@ -1,1 +1,0 @@
-class Mummy(pyglet.sprite.Sprite):

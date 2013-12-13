@@ -1,6 +1,6 @@
+
 #################### Imports ####################
 import pyglet
-import bots # bots could be players
 #################################################
 
 ################### Functions ###################
@@ -18,20 +18,37 @@ def load_resources():
 def load_intro_video():
     pass
 
-def move_player(dt):
-    ball.x += dt * 50
+def move_mummy(dt):
+    mummy1.x += dt * mummy1.get_speed()
+    
+    
+class Mummy(pyglet.sprite.Sprite):
+    def __init__(self, img, x=0, y=0):
+        pyglet.sprite.Sprite.__init__(self, img, x, y)
+        self.speed = MUMMY_SPEED
+        
+    def speed_up(self):
+        self.speed = MUMMY_DASH
+    
+    def reset_speed(self):
+        self.speed = MUMMY_SPEED
+    
+    def get_speed(self):
+        return self.speed
 #################################################
 
+MUMMY_SPEED = 50
+MUMMY_DASH = 70
+PLAYER_SPEED = 40
 
 load_resources() # Loads the resources from the resources folder.
 
 
 window = pyglet.window.Window(caption="Hello, world!", width=1000, height=900)
-#pyglet.gl.glClearColor(1, 1, 1, 1)
 
 
-ball_image = pyglet.image.load("res/images/ball.png") # Loads an arbitrary image for testing.
-ball = pyglet.sprite.Sprite(ball_image, x=50, y=50) # Places the ball in the bottom left corner.
+ball_image = pyglet.image.load("res/images/player.png") # Loads an arbitrary image for testing.
+mummy1 = Mummy(ball_image, x=50, y=50) # Places the ball in the bottom left corner.
 
 # Get what keys are being pressed.
 key = pyglet.window.key
@@ -39,17 +56,13 @@ key = pyglet.window.key
 @window.event
 def on_draw():
     window.clear() # Clear the window before doing anything on it
-    ball.draw() # Else if we don't have the video, draw the ball.
+    mummy1.draw() 
 
 @window.event
 def on_key_press(symbol, modifiers):
-#     if symbol == key.SPACE: # When the user presses space, change the caption!
-#         window.set_caption("Changed caption, skipped video")
-#         if player.playing:
-#             player.next()
-    
     if symbol == key.RIGHT:
-        pyglet.clock.schedule_interval(move_player, 1/60)
+        pyglet.clock.schedule_interval(move_mummy, 1/120)
+        mummy1.speed_up()
         
 
     if symbol == key.ENTER: # When they press enter, maximise the window
