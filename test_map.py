@@ -44,11 +44,11 @@ PLAYER_SPEED = 40
 load_resources() # Loads the resources from the resources folder.
 
 
-window = pyglet.window.Window(caption="Hello, world!", width=1000, height=900)
+window = pyglet.window.Window(caption="Hello, world!", width=1200, height=1000)
 
 
-ball_image = pyglet.image.load("res/images/player.png") # Loads an arbitrary image for testing.
-mummy1 = Mummy(ball_image, x=50, y=50) # Places the ball in the bottom left corner.
+mummy_image = pyglet.image.load("res/images/mummy.png") # Loads an arbitrary image for testing.
+mummy1 = Mummy(mummy_image, x=50, y=50) # Places the ball in the bottom left corner.
 
 # Get what keys are being pressed.
 key = pyglet.window.key
@@ -64,7 +64,6 @@ def on_key_press(symbol, modifiers):
         pyglet.clock.schedule_interval(move_mummy, 1/120)
         mummy1.speed_up()
         
-
     if symbol == key.ENTER: # When they press enter, maximise the window
         if window.fullscreen:
             window.set_fullscreen(False)
