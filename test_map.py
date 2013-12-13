@@ -99,23 +99,24 @@ class MainMenu(Screen):
     "This class presents the title screen and options for new game."
     def __init__(self, game):
         self.game = game
+        self.mummy_image = pyglet.image.load("res/images/mummy.png") # Loads an arbitrary image for testing.
+        self.mummy1 = Mummy(self.mummy_image, x=50, y=50) # Places the ball in the bottom left corner.
         
     def start(self):
-        #pyglet.clock.schedule_interval(move_mummy, 1/120)
-        pass
+        self.main_menu_keys = pyglet.window.key
 
     def handle_new_game(self):
         self.game.start_playing()
         
-    def move_mummy(self, dt):
-        mummy1.x += dt * mummy1.get_speed()
+    def move_mummy_right(self, dt):
+        self.mummy1.x += dt * self.mummy1.get_speed()
 
     def on_key_press(self, symbol, modifiers):
-        if symbol == key.RIGHT:
-            pyglet.clock.schedule_interval(self.move_mummy, 1/120)
-            mummy1.speed_up()
+        if symbol == self.main_menu_keys.RIGHT:
+            pyglet.clock.schedule_interval(self.move_mummy_right, 1/60)
+            self.mummy1.speed_up()
             
-        if symbol == key.ENTER: # When they press enter, maximise the window
+        if symbol == self.main_menu_keys.ENTER: # When they press enter, maximise the window
             if window.fullscreen:
                 window.set_fullscreen(False)
     
@@ -123,7 +124,7 @@ class MainMenu(Screen):
                 window.set_fullscreen(True)
 
     def on_draw(self):
-        mummy1.draw()
+        self.mummy1.draw()
         
     # be sure to implement methods from Screen
 
@@ -132,14 +133,9 @@ class MainMenu(Screen):
 def load_intro_video():
     pass
 
-
-
-key = pyglet.window.key
-mummy_image = pyglet.image.load("res/images/mummy.png") # Loads an arbitrary image for testing.
-mummy1 = Mummy(mummy_image, x=50, y=50) # Places the ball in the bottom left corner.
-
 load_resources() # Loads the resources from the resources folder.
-
+# mummy_image = pyglet.image.load("res/images/mummy.png") # Loads an arbitrary image for testing.
+# mummy1 = Mummy(mummy_image, x=50, y=50) # Places the ball in the bottom left corner.
 
 # Run the game!!
 if __name__ == '__main__':
