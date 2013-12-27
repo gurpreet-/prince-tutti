@@ -1,4 +1,5 @@
 import pyglet
+import math
 #from maps import *
 
 WINDOW_SIZE_X = 1200
@@ -16,6 +17,10 @@ def load_resources():
 def center_anchor(image):
     image.anchor_x = image.width//2
     image.anchor_y = image.height//2
+
+def get_area(img, x, y):
+        if img.x - img.width/2 < x < img.x + img.width/2 and img.y - img.height/2 < y < img.y + img.height/2:
+            return True
 
 
 class Rectangle(object):
@@ -68,6 +73,7 @@ class Game:
         self.window.set_handler("on_key_press", self.current_screen.on_key_press)
         self.window.set_handler("on_draw", self.current_screen.on_draw)
         self.window.set_handler("on_mouse_press", self.current_screen.on_mouse_press)
+        self.window.set_handler("on_mouse_motion", self.current_screen.on_mouse_motion)
         self.current_screen.start()
 
     def goto_next_level(self):
@@ -110,6 +116,9 @@ class Screen:
         pass
     
     def on_mouse_press(self, x, y, button, modifiers):
+        pass
+    
+    def on_mouse_motion(self, x, y, dx, dy):
         pass
 
     def on_draw(self):
@@ -165,7 +174,8 @@ class MainMenu(Screen):
         self.text1 = "Start. \n"
         
         self.batch = pyglet.graphics.Batch()
-        self.fg_group = pyglet.graphics.OrderedGroup(3)
+        self.fg_group = pyglet.graphics.OrderedGroup(4)
+        self.bg_group_4 = pyglet.graphics.OrderedGroup(3)
         self.bg_group_3 = pyglet.graphics.OrderedGroup(2)
         self.bg_group_2 = pyglet.graphics.OrderedGroup(1)
         self.bg_group = pyglet.graphics.OrderedGroup(0)
@@ -181,7 +191,7 @@ class MainMenu(Screen):
         self.pyramid = pyglet.sprite.Sprite(self.pyramid_image, x=WINDOW_SIZE_X/2,
                                                y=WINDOW_SIZE_Y/3,
                                                batch=self.batch,
-                                               group=self.bg_group_2)
+                                               group=self.bg_group_3)
         
         self.sun_image = pyglet.image.load("res/images/sun.jpg")
         center_anchor(self.sun_image)
@@ -195,27 +205,61 @@ class MainMenu(Screen):
         self.sand = pyglet.sprite.Sprite(self.sand_image, x=WINDOW_SIZE_X/2,
                                                y=WINDOW_SIZE_Y/5,
                                                batch=self.batch,
-                                               group=self.bg_group_3)
+                                               group=self.bg_group_4)
         
+        self.start_image = pyglet.image.load("res/images/main_start.png")
+        center_anchor(self.start_image)
+        self.start_button = pyglet.sprite.Sprite(self.start_image, x=WINDOW_SIZE_X/2,
+                                               y=WINDOW_SIZE_Y/2+100,
+                                               batch=self.batch,
+                                               group=self.fg_group)
+        
+        self.instructions_image = pyglet.image.load("res/images/main_help.png")
+        center_anchor(self.instructions_image)
+        self.instr_button = pyglet.sprite.Sprite(self.instructions_image, x=WINDOW_SIZE_X/2,
+                                               y=WINDOW_SIZE_Y/2,
+                                               batch=self.batch,
+                                               group=self.fg_group)
+        
+        self.settings_image = pyglet.image.load("res/images/main_settings.png")
+        center_anchor(self.settings_image)
+        self.settings_button = pyglet.sprite.Sprite(self.settings_image, x=WINDOW_SIZE_X/2,
+                                               y=WINDOW_SIZE_Y/2-100,
+                                               batch=self.batch,
+                                               group=self.fg_group)
+        
+        self.cloud_image1 = pyglet.image.load("res/images/cloud.png")
+        center_anchor(self.cloud_image1)
+        self.cloud1 = pyglet.sprite.Sprite(self.cloud_image1, x=-WINDOW_SIZE_X/10,
+                                               y=WINDOW_SIZE_Y-300,
+                                               batch=self.batch,
+                                               group=self.bg_group_2)
+
+        
+        self.cloud1.scale = 0.3
+        self.start_button.scale = 0.13
+        self.instr_button.scale = 0.13
+        self.settings_button.scale = 0.13
         self.sun.scale = 0.92
         self.sand.scale = 0.86
         self.pyramid.scale = 1.3
         
         
-        self.document = pyglet.text.document.FormattedDocument(self.text1)
-        self.document.set_style(0, len(self.document.text),
-                                dict(color=(255, 255, 255, 255)))
+#         self.document = pyglet.text.document.FormattedDocument(self.text1)
+#         self.document.set_style(0, len(self.document.text),
+#                                 dict(color=(255, 255, 255, 255)))
+#         
+#         
+#         self.layout = pyglet.text.layout.IncrementalTextLayout(self.document,
+#                                                                 500,
+#                                                                 300,
+#                                                                 multiline=True,
+#                                                                 batch=self.batch,
+#                                                                 group=self.fg_group)
         
-        
-        self.layout = pyglet.text.layout.IncrementalTextLayout(self.document,
-                                                                500,
-                                                                300,
-                                                                multiline=True,
-                                                                batch=self.batch,
-                                                                group=self.fg_group)
-        
-        self.layout.x = WINDOW_SIZE_X/2
-        self.layout.y = WINDOW_SIZE_Y/3
+#         self.layout.x = WINDOW_SIZE_X/2
+#         self.layout.y = WINDOW_SIZE_Y/3
+
         self.count = 0
         self.reset_count = 160
         self.lower_count = self.reset_count/4
@@ -223,6 +267,11 @@ class MainMenu(Screen):
         self.upper_count = self.reset_count-self.lower_count
         pyglet.clock.schedule_interval(self.move_logo, 1/120.0)
         pyglet.clock.schedule_interval(self.counter, 1/120.0)
+        pyglet.clock.schedule_interval(self.move_clouds, 1/120.0)
+        
+        self.in_upper = False
+        self.is_hand = False
+        
         
          
         #self.text2 = "yoyo"
@@ -246,10 +295,10 @@ class MainMenu(Screen):
         elif self.count <= self.lower_count:
             self.logo.y += 12 * dt
             
-        
     def start(self):
         self.main_menu_keys = pyglet.window.key
         self.mouse = pyglet.window.mouse
+        self.i = 0
 
     def handle_new_game(self):
         self.game.start_playing()
@@ -260,9 +309,57 @@ class MainMenu(Screen):
     
     def on_mouse_press(self, x, y, button, modifiers):
         if button == self.mouse.LEFT:
-            self.game.clear_current_screen()
-            self.game.load_actualgame()
-            self.game.start_current_screen()
+            if self.is_hand:
+                self.game.clear_current_screen()
+                self.game.load_actualgame()
+                self.game.start_current_screen()
+            
+    def on_mouse_motion(self, x, y, dx, dy):
+        self.x = x
+        self.y = y
+        self.dy = dy
+        pyglet.clock.schedule_interval(self.move_elements, 1/120.0)
+        if WINDOW_SIZE_Y/2 < self.y:
+            self.in_upper = True
+            
+        elif WINDOW_SIZE_Y/2 >= self.y:
+            self.in_upper = False
+            
+        if get_area(self.start_button, x, y):
+            self.hand = self.game.window.get_system_mouse_cursor('hand')
+            self.game.window.set_mouse_cursor(self.hand)
+            self.is_hand = True
+        elif not get_area(self.start_button, x, y):
+            self.game.window.set_mouse_cursor(self.game.window.get_system_mouse_cursor(None))
+            self.is_hand = False
+        
+    def move_elements(self, dt):
+        self.factor = 6
+            
+        if self.in_upper:
+            if self.i < 40:
+                self.i = self.i + dt
+                self.pyramid.y += 0.002 * self.factor
+                self.sand.y += 0.003 * self.factor
+            elif 40 <= self.i < 90:
+                self.i = self.i + dt
+                self.pyramid.y += 0.001 * self.factor
+                self.sand.y += 0.002 * self.factor
+            
+        elif not self.in_upper:
+            if self.i > 90:
+                self.i = 90
+            elif 40 < self.i <= 90:
+                self.i = self.i - dt
+                self.pyramid.y -= 0.001 * self.factor
+                self.sand.y -= 0.002 * self.factor
+            elif 0 < self.i <= 40:
+                self.i = self.i - dt
+                self.pyramid.y -= 0.002 * self.factor
+                self.sand.y -= 0.003 * self.factor
+                
+    def move_clouds(self, dt):
+        self.cloud1.x += 50 * dt
 
     def on_draw(self):
         self.game.window.clear()
