@@ -1,5 +1,5 @@
 import pyglet
-import math
+import random
 #from maps import *
 
 WINDOW_SIZE_X = 1200
@@ -172,6 +172,9 @@ class MainMenu(Screen):
         self.game = game
         pyglet.font.add_directory("res/fonts")
         self.text1 = "Start. \n"
+        self.cloud_start = -WINDOW_SIZE_X/10
+        self.cloud_end = WINDOW_SIZE_X + WINDOW_SIZE_X/10
+        self.window_half_x = WINDOW_SIZE_X/2
         
         self.batch = pyglet.graphics.Batch()
         self.fg_group = pyglet.graphics.OrderedGroup(4)
@@ -182,61 +185,71 @@ class MainMenu(Screen):
         
         self.logo_image = pyglet.image.load("res/images/logo.png")
         center_anchor(self.logo_image)
-        self.logo = pyglet.sprite.Sprite(img=self.logo_image, x=WINDOW_SIZE_X/2,
+        self.logo = pyglet.sprite.Sprite(img=self.logo_image, x=self.window_half_x,
                                          y=WINDOW_SIZE_Y/2+300, batch=self.batch,
                                          group=self.fg_group)
         
         self.pyramid_image = pyglet.image.load("res/images/pyramids.png")
         center_anchor(self.pyramid_image)
-        self.pyramid = pyglet.sprite.Sprite(self.pyramid_image, x=WINDOW_SIZE_X/2,
+        self.pyramid = pyglet.sprite.Sprite(self.pyramid_image, x=self.window_half_x,
                                                y=WINDOW_SIZE_Y/3,
                                                batch=self.batch,
                                                group=self.bg_group_3)
         
         self.sun_image = pyglet.image.load("res/images/sun.jpg")
         center_anchor(self.sun_image)
-        self.sun = pyglet.sprite.Sprite(self.sun_image, x=WINDOW_SIZE_X/2,
+        self.sun = pyglet.sprite.Sprite(self.sun_image, x=self.window_half_x,
                                                y=WINDOW_SIZE_Y/1.9,
                                                batch=self.batch,
                                                group=self.bg_group)
         
         self.sand_image = pyglet.image.load("res/images/sandy.png")
         center_anchor(self.sand_image)
-        self.sand = pyglet.sprite.Sprite(self.sand_image, x=WINDOW_SIZE_X/2,
+        self.sand = pyglet.sprite.Sprite(self.sand_image, x=self.window_half_x,
                                                y=WINDOW_SIZE_Y/5,
                                                batch=self.batch,
                                                group=self.bg_group_4)
         
         self.start_image = pyglet.image.load("res/images/main_start.png")
         center_anchor(self.start_image)
-        self.start_button = pyglet.sprite.Sprite(self.start_image, x=WINDOW_SIZE_X/2,
+        self.start_button = pyglet.sprite.Sprite(self.start_image, x=self.window_half_x,
                                                y=WINDOW_SIZE_Y/2+100,
                                                batch=self.batch,
                                                group=self.fg_group)
         
         self.instructions_image = pyglet.image.load("res/images/main_help.png")
         center_anchor(self.instructions_image)
-        self.instr_button = pyglet.sprite.Sprite(self.instructions_image, x=WINDOW_SIZE_X/2,
+        self.instr_button = pyglet.sprite.Sprite(self.instructions_image, x=self.window_half_x,
                                                y=WINDOW_SIZE_Y/2,
                                                batch=self.batch,
                                                group=self.fg_group)
         
         self.settings_image = pyglet.image.load("res/images/main_settings.png")
         center_anchor(self.settings_image)
-        self.settings_button = pyglet.sprite.Sprite(self.settings_image, x=WINDOW_SIZE_X/2,
+        self.settings_button = pyglet.sprite.Sprite(self.settings_image, x=self.window_half_x,
                                                y=WINDOW_SIZE_Y/2-100,
                                                batch=self.batch,
                                                group=self.fg_group)
         
         self.cloud_image1 = pyglet.image.load("res/images/cloud.png")
         center_anchor(self.cloud_image1)
-        self.cloud1 = pyglet.sprite.Sprite(self.cloud_image1, x=-WINDOW_SIZE_X/10,
+        self.cloud1 = pyglet.sprite.Sprite(self.cloud_image1, x=self.cloud_start,
                                                y=WINDOW_SIZE_Y-300,
                                                batch=self.batch,
                                                group=self.bg_group_2)
+        
+        self.cloud_image2 = pyglet.image.load("res/images/cloud2.png")
+        center_anchor(self.cloud_image2)
+        self.cloud2 = pyglet.sprite.Sprite(self.cloud_image2, x=self.cloud_start,
+                                               y=WINDOW_SIZE_Y-100,
+                                               batch=self.batch,
+                                               group=self.bg_group_2)
+        
+        self.clouds = [self.cloud1, self.cloud2]
 
         
         self.cloud1.scale = 0.3
+        self.cloud2.scale = 0.3
         self.start_button.scale = 0.13
         self.instr_button.scale = 0.13
         self.settings_button.scale = 0.13
@@ -359,7 +372,13 @@ class MainMenu(Screen):
                 self.sand.y -= 0.003 * self.factor
                 
     def move_clouds(self, dt):
-        self.cloud1.x += 50 * dt
+        for obj in self.clouds:
+            if obj.x > self.cloud_end:
+                obj.x = self.cloud_start
+                obj.y = random.randint(WINDOW_SIZE_Y/2, WINDOW_SIZE_Y)
+            obj.x += random.randint(2, 50) * dt
+            
+            
 
     def on_draw(self):
         self.game.window.clear()
