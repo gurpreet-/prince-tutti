@@ -1,7 +1,7 @@
 import pyglet
 #from maps import *
 
-WINDOW_SIZE_X = 1300
+WINDOW_SIZE_X = 1200
 WINDOW_SIZE_Y = 1000
 MUMMY_SPEED = 50
 MUMMY_DASH = 70
@@ -12,6 +12,10 @@ PLAYER_SPEED = 40
 def load_resources():
     pyglet.resource.path = ["res", "res/images", "res/videos", "res/fonts"]
     pyglet.resource.reindex()
+    
+def center_anchor(image):
+    image.anchor_x = image.width//2
+    image.anchor_y = image.height//2
 
 
 class Rectangle(object):
@@ -80,7 +84,14 @@ class Game:
         self.start_current_screen()
 
     def execute(self):
-        self.window = pyglet.window.Window(caption="Hello, world!", width=WINDOW_SIZE_X, height=WINDOW_SIZE_Y)
+        self.display = pyglet.canvas.Display().get_default_screen()
+        self.window = pyglet.window.Window(caption="Prince Tutti",
+                                           style='dialog',
+                                           screen=self.display,
+                                           #fullscreen=True,
+                                           width=WINDOW_SIZE_X,
+                                           height=WINDOW_SIZE_Y)
+        #pyglet.gl.glScalef(0.9, 0.9, 0.9)
         self.start_current_screen()
         pyglet.app.run()
 
@@ -88,10 +99,10 @@ class Game:
 class Screen:
     def __init__(self):
         pass
-
+ 
     def start(self):
         pass
-
+ 
     def clear(self):
         pass
 
@@ -102,7 +113,8 @@ class Screen:
         pass
 
     def on_draw(self):
-        pass
+        pyglet.gl.glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST) 
+        pyglet.gl.glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST)
 
 
 class LevelPlayer(Screen):
@@ -151,23 +163,43 @@ class MainMenu(Screen):
         self.game = game
         pyglet.font.add_directory("res/fonts")
         self.text1 = "Start. \n"
-        self.text2 = "yoyo"
         
         self.batch = pyglet.graphics.Batch()
-        self.fg_group = pyglet.graphics.OrderedGroup(1)
+        self.fg_group = pyglet.graphics.OrderedGroup(3)
+        self.bg_group_3 = pyglet.graphics.OrderedGroup(2)
+        self.bg_group_2 = pyglet.graphics.OrderedGroup(1)
         self.bg_group = pyglet.graphics.OrderedGroup(0)
         
         self.logo_image = pyglet.image.load("res/images/logo.png")
-        self.logo = pyglet.sprite.Sprite(self.logo_image, x=WINDOW_SIZE_X/4,
-                                         y=WINDOW_SIZE_Y/1.25, batch=self.batch,
+        center_anchor(self.logo_image)
+        self.logo = pyglet.sprite.Sprite(img=self.logo_image, x=WINDOW_SIZE_X/2,
+                                         y=WINDOW_SIZE_Y/2+300, batch=self.batch,
                                          group=self.fg_group)
-        self.logo.anchor_x = self.logo.width/2
-        self.logo.anchor_y = self.logo.height/2
         
-        self.player_image = pyglet.image.load("res/images/player.png")
-        self.foreground = pyglet.sprite.Sprite(self.player_image, x=700, y=98,
+        self.pyramid_image = pyglet.image.load("res/images/pyramids.png")
+        center_anchor(self.pyramid_image)
+        self.pyramid = pyglet.sprite.Sprite(self.pyramid_image, x=WINDOW_SIZE_X/2,
+                                               y=WINDOW_SIZE_Y/3,
                                                batch=self.batch,
-                                               group=self.fg_group)
+                                               group=self.bg_group_2)
+        
+        self.sun_image = pyglet.image.load("res/images/sun.jpg")
+        center_anchor(self.sun_image)
+        self.sun = pyglet.sprite.Sprite(self.sun_image, x=WINDOW_SIZE_X/2,
+                                               y=WINDOW_SIZE_Y/1.9,
+                                               batch=self.batch,
+                                               group=self.bg_group)
+        
+        self.sand_image = pyglet.image.load("res/images/sandy.png")
+        center_anchor(self.sand_image)
+        self.sand = pyglet.sprite.Sprite(self.sand_image, x=WINDOW_SIZE_X/2,
+                                               y=WINDOW_SIZE_Y/5,
+                                               batch=self.batch,
+                                               group=self.bg_group_3)
+        
+        self.sun.scale = 0.92
+        self.sand.scale = 0.86
+        self.pyramid.scale = 1.3
         
         
         self.document = pyglet.text.document.FormattedDocument(self.text1)
@@ -182,10 +214,38 @@ class MainMenu(Screen):
                                                                 batch=self.batch,
                                                                 group=self.fg_group)
         
-        self.layout.x = 50
-        self.layout.y = 500
+        self.layout.x = WINDOW_SIZE_X/2
+        self.layout.y = WINDOW_SIZE_Y/3
+        self.count = 0
+        self.reset_count = 160
+        self.lower_count = self.reset_count/4
+        self.middle_count = self.lower_count*2
+        self.upper_count = self.reset_count-self.lower_count
+        pyglet.clock.schedule_interval(self.move_logo, 1/120.0)
+        pyglet.clock.schedule_interval(self.counter, 1/120.0)
+        
          
+        #self.text2 = "yoyo"
         #self.document.insert_text(len(self.document.text), self.text2, dict(color=(255, 255, 255, 255)))
+        
+    def counter(self, dt):
+        self.count += 1
+        if self.count > self.reset_count:
+            self.count = 0
+            
+    def move_logo(self, dt):
+        if self.upper_count > self.count > self.middle_count:
+            self.logo.y -= 12 * dt
+            
+        elif self.count >= self.upper_count:
+            self.logo.y -= 6 * dt
+
+        elif self.lower_count < self.count <= self.middle_count:
+            self.logo.y += 6 * dt
+            
+        elif self.count <= self.lower_count:
+            self.logo.y += 12 * dt
+            
         
     def start(self):
         self.main_menu_keys = pyglet.window.key
@@ -225,6 +285,7 @@ class Video(Screen):
 
     def on_key_press(self, symbol, modifiers):
         if symbol == self.video_keys.SPACE or symbol == self.video_keys.ENTER:
+            #self.game.window.set_fullscreen(True)
             self.game.clear_current_screen()
             self.game.load_mainmenu()
             self.game.start_current_screen()
