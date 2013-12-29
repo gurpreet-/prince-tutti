@@ -1,5 +1,6 @@
 import pyglet
-import random
+from random import randint
+from math import floor
 #from maps import *
 
 WINDOW_SIZE_X = 1200
@@ -55,8 +56,11 @@ class Game:
         "Load progress from disk"
         pass
     
+    def return_level(self):
+        return self.current_level
+    
     def load_actualgame(self):
-        self.current_screen = ActualGame(self)
+        self.current_screen = ActualGame(game, self.current_level)
     
     def load_mainmenu(self):
         self.current_screen = MainMenu(self)
@@ -80,13 +84,13 @@ class Game:
         "called from within LevelPlayer when the player beats the level"
         self.clear_current_screen()
         self.current_level += 1
-        self.current_screen = LevelPlayer(self, game, self.current_level)
+        self.current_screen = ActualGame(game, self.current_level)
         self.start_current_screen()
 
     def start_playing(self):
         "called by the main menu when the user selects an option"
         self.clear_current_screen()
-        self.current_screen = LevelPlayer(self, game, self.current_level)
+        self.current_screen = ActualGame(game, self.current_level)
         self.start_current_screen()
 
     def execute(self):
@@ -97,7 +101,7 @@ class Game:
                                            #fullscreen=True,
                                            width=WINDOW_SIZE_X,
                                            height=WINDOW_SIZE_Y)
-        #pyglet.gl.glScalef(0.9, 0.9, 0.9)
+        #pyglet.gl.glScalef(1.2, 1.2, 1.2)
         self.start_current_screen()
         pyglet.app.run()
 
@@ -124,45 +128,208 @@ class Screen:
     def on_draw(self):
         pyglet.gl.glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST) 
         pyglet.gl.glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST)
-
-
-class LevelPlayer(Screen):
-    "This class contains all your game logic. This is the class that enables the user to play through a level."
-    def __init__(self, game, level_to_play):
-        pass
     
     
 class ActualGame(Screen):
-    "This class presents the title screen and options for new game."
-    def __init__(self, game):
+    "This class contains all your game logic. This is the class that enables the user to play through a level."
+    def __init__(self, game, level_to_play):
         self.game = game
-        self.mummy_image = pyglet.image.load("res/images/mummy.png") # Loads an arbitrary image for testing.
-        self.mummy1 = Mummy(self.mummy_image, x=50, y=50) # Places the ball in the bottom left corner.
+        self.level = level_to_play
+        self.interface_batch = pyglet.graphics.Batch()
+        self.tile_batch = pyglet.graphics.Batch()
         
+        self.text_group = pyglet.graphics.OrderedGroup(3)
+        self.fg_group = pyglet.graphics.OrderedGroup(2)
+        self.bg2_group = pyglet.graphics.OrderedGroup(1)
+        self.bg_group = pyglet.graphics.OrderedGroup(0)
+        
+        self.interface = Interface(self.fg_group, self.text_group, self.interface_batch)
+        self.map = Maps(self.group_text, self.batch, self.bonuscontainer_start,
+                       self.score_scroll.y,
+                       self.bonuscontainer_end - self.bonuscontainer_start,
+                       self.score_scroll.height/1.5)
+
     def start(self):
         self.main_menu_keys = pyglet.window.key
+        self.game.window.set_mouse_cursor(self.game.window.get_system_mouse_cursor(None))
 
-    def handle_new_game(self):
+    def new_game(self):
         self.game.start_playing()
-        
-    def move_mummy_right(self, dt):
-        self.mummy1.x += dt * self.mummy1.get_speed()
 
     def on_key_press(self, symbol, modifiers):
-        if symbol == self.main_menu_keys.RIGHT:
-            pyglet.clock.schedule_interval(self.move_mummy_right, 1/120)
-            self.mummy1.speed_up()
-            
-        if symbol == self.main_menu_keys.ENTER: # When they press enter, maximise the window
-            if window.fullscreen:
-                window.set_fullscreen(False)
-    
-            elif not window.fullscreen: # Enable the toggling of window sizing. 
-                window.set_fullscreen(True)
+            pass
 
     def on_draw(self):
         self.game.window.clear()
-        self.mummy1.draw()
+        self.interface_batch.draw()
+        
+
+class Interface:
+    def __init__(self, group_images, group_text, batch):
+        self.batch = batch
+        self.group_images = group_images
+        self.group_text = group_text
+        
+        self.scroll_handle_width = 20
+        self.spacing = 20
+
+        self.logo_image = pyglet.image.load("res/images/logo.png")
+        self.logo = pyglet.sprite.Sprite(img=self.logo_image, x=self.spacing,
+                                     y=WINDOW_SIZE_Y/1.17, batch=self.batch,
+                                     group=self.group_images)
+            
+        self.score_image = pyglet.image.load("res/images/score_scroll.png")
+        self.score_scroll = pyglet.sprite.Sprite(img=self.score_image, x=self.logo.width + self.spacing,
+                                             y=WINDOW_SIZE_Y/1.17, batch=self.batch,
+                                             group=self.group_images)
+            
+        self.livescontainer_start = self.score_scroll.x + self.scroll_handle_width
+        self.livescontainer_end = self.livescontainer_start + self.score_scroll.width/4
+    
+
+        self.bonuscontainer_start = self.livescontainer_end
+        self.bonuscontainer_end = self.bonuscontainer_start + self.score_scroll.width/4
+    
+        self.scorecontainer_start = self.bonuscontainer_end
+        self.scorecontainer_end = self.scorecontainer_start - self.scroll_handle_width + self.score_scroll.width/2
+        
+        self.score = Score(self.group_text, self.batch, self.scorecontainer_start,
+                           self.score_scroll.y,
+                           self.scorecontainer_end - self.scorecontainer_start,
+                           self.score_scroll.height/1.5)
+        
+        self.lives = Lives(self.group_text, self.batch, self.livescontainer_start,
+                           self.score_scroll.y,
+                           self.livescontainer_end - self.livescontainer_start,
+                           self.score_scroll.height/1.5)
+        
+        self.bonus = Bonus(self.group_text, self.batch, self.bonuscontainer_start,
+                           self.score_scroll.y,
+                           self.bonuscontainer_end - self.bonuscontainer_start,
+                           self.score_scroll.height/1.5)
+        
+    def update_score_value(self):
+        self.score.update_score()
+        
+    def get_score_value(self):
+        self.score.return_score()
+
+
+class Score(Interface):
+    def __init__(self, group_text, batch, x, y, width, height):
+        self.group_text = group_text
+        self.batch = batch
+        self.x_loc = x
+        self.y_loc = y
+        self.width = width
+        self.height = height
+        self.score_num = 0
+        
+        self.score_heading = "Score\n"
+        self.document = pyglet.text.document.FormattedDocument(self.score_heading)
+        self.document.set_style(0, len(self.document.text),
+                                dict(color=(0, 0, 0, 255)))
+         
+         
+        self.layout = pyglet.text.layout.IncrementalTextLayout(self.document,
+                                                                self.width,
+                                                                self.height,
+                                                                multiline=True,
+                                                                batch=self.batch,
+                                                                group=self.group_text)
+        
+        self.position(self.layout, self.x_loc + self.width/2, self.y_loc)
+        self.update_score()
+        
+    
+    def return_score(self):
+        return self.score_num
+    
+    def position(self, document, x, y):
+        document.x = x
+        document.y = y
+    
+    def update_score(self):
+        self.score_num = str(43434)
+        self.document.insert_text(len(self.document.text), self.score_num)
+
+
+class Lives(Interface):
+    def __init__(self, group_text, batch, x, y, width, height):
+        self.group_text = group_text
+        self.batch = batch
+        self.x_loc = x
+        self.y_loc = y
+        self.width = width
+        self.height = height
+        self.lives_num = 3
+        
+        self.lives_heading = "Lives\n"
+        self.document = pyglet.text.document.FormattedDocument(self.lives_heading)
+        self.document.set_style(0, len(self.document.text),
+                                dict(color=(0, 0, 0, 255)))
+         
+         
+        self.layout = pyglet.text.layout.IncrementalTextLayout(self.document,
+                                                                self.width,
+                                                                self.height,
+                                                                multiline=True,
+                                                                batch=self.batch,
+                                                                group=self.group_text)
+        
+        self.position(self.layout, self.x_loc + self.width/2, self.y_loc)
+        self.update_lives()
+        
+    
+    def return_lives(self):
+        return self.lives_num
+    
+    def position(self, document, x, y):
+        document.x = x
+        document.y = y
+    
+    def update_lives(self):
+        self.lives_num = str(self.lives_num)
+        self.document.insert_text(len(self.document.text), self.lives_num)
+        
+class Bonus(Interface):
+    def __init__(self, group_text, batch, x, y, width, height):
+        self.group_text = group_text
+        self.batch = batch
+        self.x_loc = x
+        self.y_loc = y
+        self.width = width
+        self.height = height
+        self.bonus_num = 500
+        
+        self.bonus_heading = "Bonus\n"
+        self.document = pyglet.text.document.FormattedDocument(self.bonus_heading)
+        self.document.set_style(0, len(self.document.text),
+                                dict(color=(0, 0, 0, 255)))
+        self.document.set_paragraph_style(0, len(self.document.text), dict(align=('center')))
+         
+         
+        self.layout = pyglet.text.layout.IncrementalTextLayout(self.document,
+                                                                self.width,
+                                                                self.height,
+                                                                multiline=True,
+                                                                batch=self.batch,
+                                                                group=self.group_text)
+        
+        self.position(self.layout, self.x_loc + self.width/2, self.y_loc)
+        self.update_bonus()
+        
+    
+    def return_bonus(self):
+        return self.bonus_num
+    
+    def position(self, document, x, y):
+        document.x = x
+        document.y = y
+    
+    def update_bonus(self):
+        self.bonus_num = str(self.bonus_num)
+        self.document.insert_text(len(self.document.text), self.bonus_num)
         
 
 
@@ -256,57 +423,41 @@ class MainMenu(Screen):
         self.sun.scale = 0.92
         self.sand.scale = 0.86
         self.pyramid.scale = 1.3
-        
-        
-#         self.document = pyglet.text.document.FormattedDocument(self.text1)
-#         self.document.set_style(0, len(self.document.text),
-#                                 dict(color=(255, 255, 255, 255)))
-#         
-#         
-#         self.layout = pyglet.text.layout.IncrementalTextLayout(self.document,
-#                                                                 500,
-#                                                                 300,
-#                                                                 multiline=True,
-#                                                                 batch=self.batch,
-#                                                                 group=self.fg_group)
-        
-#         self.layout.x = WINDOW_SIZE_X/2
-#         self.layout.y = WINDOW_SIZE_Y/3
 
         self.count = 0
         self.reset_count = 160
         self.lower_count = self.reset_count/4
         self.middle_count = self.lower_count*2
-        self.upper_count = self.reset_count-self.lower_count
+        self.upper_count = self.lower_count*3
+        self.highest_y = self.logo.y
         pyglet.clock.schedule_interval(self.move_logo, 1/120.0)
         pyglet.clock.schedule_interval(self.counter, 1/120.0)
         pyglet.clock.schedule_interval(self.move_clouds, 1/120.0)
         
         self.in_upper = False
-        self.is_hand = False
-        
-        
-         
-        #self.text2 = "yoyo"
-        #self.document.insert_text(len(self.document.text), self.text2, dict(color=(255, 255, 255, 255)))
+        self.is_on_start = False
         
     def counter(self, dt):
-        self.count += 1
-        if self.count > self.reset_count:
+        if self.count >= self.reset_count:
             self.count = 0
+        self.count += 1
             
     def move_logo(self, dt):
-        if self.upper_count > self.count > self.middle_count:
+        # If the count is less than 120 but greater than 80
+        if self.upper_count >= self.count >= self.middle_count:
             self.logo.y -= 12 * dt
-            
+        
+        # If the count is greater than 120
         elif self.count >= self.upper_count:
             self.logo.y -= 6 * dt
 
-        elif self.lower_count < self.count <= self.middle_count:
-            self.logo.y += 6 * dt
-            
-        elif self.count <= self.lower_count:
+        # If the count is greater than 40 but less than 80
+        elif self.lower_count <= self.count <= self.middle_count:
             self.logo.y += 12 * dt
+            
+        # If the count is less than 40
+        elif self.count <= self.lower_count:
+            self.logo.y += 6 * dt
             
     def start(self):
         self.main_menu_keys = pyglet.window.key
@@ -322,10 +473,8 @@ class MainMenu(Screen):
     
     def on_mouse_press(self, x, y, button, modifiers):
         if button == self.mouse.LEFT:
-            if self.is_hand:
-                self.game.clear_current_screen()
-                self.game.load_actualgame()
-                self.game.start_current_screen()
+            if self.is_on_start:
+                self.game.start_playing()
             
     def on_mouse_motion(self, x, y, dx, dy):
         self.x = x
@@ -341,10 +490,10 @@ class MainMenu(Screen):
         if get_area(self.start_button, x, y):
             self.hand = self.game.window.get_system_mouse_cursor('hand')
             self.game.window.set_mouse_cursor(self.hand)
-            self.is_hand = True
+            self.is_on_start = True
         elif not get_area(self.start_button, x, y):
             self.game.window.set_mouse_cursor(self.game.window.get_system_mouse_cursor(None))
-            self.is_hand = False
+            self.is_on_start = False
         
     def move_elements(self, dt):
         self.factor = 6
@@ -375,10 +524,8 @@ class MainMenu(Screen):
         for obj in self.clouds:
             if obj.x > self.cloud_end:
                 obj.x = self.cloud_start
-                obj.y = random.randint(WINDOW_SIZE_Y/2, WINDOW_SIZE_Y)
-            obj.x += random.randint(2, 50) * dt
-            
-            
+                obj.y = randint(floor(WINDOW_SIZE_Y/3), WINDOW_SIZE_Y)
+            obj.x += randint(2, 50) * dt
 
     def on_draw(self):
         self.game.window.clear()
