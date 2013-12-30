@@ -12,7 +12,9 @@ PLAYER_SPEED = 40
 # Load the resources from the following folders,
 # then re-index the file resource locations.
 def load_resources():
-    pyglet.resource.path = ["res", "res/images", "res/videos", "res/fonts"]
+    pyglet.resource.path = ["res", "res/images",
+                            "res/videos", "res/fonts",
+                            "res/music"]
     pyglet.resource.reindex()
     
 def center_anchor(image):
@@ -78,6 +80,7 @@ class Game:
         self.window.set_handler("on_draw", self.current_screen.on_draw)
         self.window.set_handler("on_mouse_press", self.current_screen.on_mouse_press)
         self.window.set_handler("on_mouse_motion", self.current_screen.on_mouse_motion)
+        self.window.set_handler("on_eos", self.current_screen.on_eos)
         self.current_screen.start()
 
     def goto_next_level(self):
@@ -124,6 +127,9 @@ class Screen:
     
     def on_mouse_motion(self, x, y, dx, dy):
         pass
+    
+    def on_eos(self):
+        pass
 
     def on_draw(self):
         pyglet.gl.glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST) 
@@ -144,10 +150,10 @@ class ActualGame(Screen):
         self.bg_group = pyglet.graphics.OrderedGroup(0)
         
         self.interface = Interface(self.fg_group, self.text_group, self.interface_batch)
-        self.map = Maps(self.group_text, self.batch, self.bonuscontainer_start,
-                       self.score_scroll.y,
-                       self.bonuscontainer_end - self.bonuscontainer_start,
-                       self.score_scroll.height/1.5)
+#         self.map = Maps(self.group_text, self.batch, self.bonuscontainer_start,
+#                        self.score_scroll.y,
+#                        self.bonuscontainer_end - self.bonuscontainer_start,
+#                        self.score_scroll.height/1.5)
 
     def start(self):
         self.main_menu_keys = pyglet.window.key
@@ -434,6 +440,12 @@ class MainMenu(Screen):
         pyglet.clock.schedule_interval(self.counter, 1/120.0)
         pyglet.clock.schedule_interval(self.move_clouds, 1/120.0)
         
+        self.player = pyglet.media.Player()
+        self.music = pyglet.resource.media("rumba.mp3")
+        self.player.queue(self.music)
+        self.player.play()
+        self.stop_playing = False
+        
         self.in_upper = False
         self.is_on_start = False
         
@@ -444,7 +456,7 @@ class MainMenu(Screen):
             
     def move_logo(self, dt):
         # If the count is less than 120 but greater than 80
-        if self.upper_count >= self.count >= self.middle_count:
+        if self.upper_count > self.count >= self.middle_count:
             self.logo.y -= 12 * dt
         
         # If the count is greater than 120
@@ -458,6 +470,9 @@ class MainMenu(Screen):
         # If the count is less than 40
         elif self.count <= self.lower_count:
             self.logo.y += 6 * dt
+            
+    def on_eos(self):
+        pass
             
     def start(self):
         self.main_menu_keys = pyglet.window.key
@@ -524,7 +539,10 @@ class MainMenu(Screen):
         for obj in self.clouds:
             if obj.x > self.cloud_end:
                 obj.x = self.cloud_start
-                obj.y = randint(floor(WINDOW_SIZE_Y/3), WINDOW_SIZE_Y)
+                self.random_num = randint(floor(WINDOW_SIZE_Y/3), WINDOW_SIZE_Y)
+                obj.y = self.random_num
+                if WINDOW_SIZE_Y/3 < self.random_num < WINDOW_SIZE_Y/2:
+                    obj.scale = 0.13
             obj.x += randint(2, 50) * dt
 
     def on_draw(self):
