@@ -3,24 +3,33 @@ from random import randint
 from math import floor
 #from maps import *
 
-WINDOW_SIZE_X = 1200
+WINDOW_SIZE_X = 1300
 WINDOW_SIZE_Y = 1000
-MUMMY_SPEED = 50
-MUMMY_DASH = 70
-PLAYER_SPEED = 40
+MUMMY_SPEED = 2
+MUMMY_DASH = 3
+PLAYER_SPEED = 2.1
 
 # Load the resources from the following folders,
 # then re-index the file resource locations.
 def load_resources():
     pyglet.resource.path = ["res", "res/images",
                             "res/videos", "res/fonts",
-                            "res/music"]
+                            "res/music", "res/maps"]
     pyglet.resource.reindex()
     
 def center_anchor(image):
     image.anchor_x = image.width//2
     image.anchor_y = image.height//2
-
+    
+def image_aligner(img, x_pos, y_pos, batch, group):
+    image_load = pyglet.image.load(img)
+    center_anchor(image_load)
+    image = pyglet.sprite.Sprite(image_load, x=x_pos,
+                                           y=y_pos,
+                                           batch=batch,
+                                           group=group)
+    return image
+    
 def get_area(img, x, y):
         if img.x - img.width/2 < x < img.x + img.width/2 and img.y - img.height/2 < y < img.y + img.height/2:
             return True
@@ -35,9 +44,21 @@ class Rectangle(object):
 
 
 class Mummy(pyglet.sprite.Sprite):
-    def __init__(self, img, x=0, y=0):
-        pyglet.sprite.Sprite.__init__(self, img, x, y)
+    def __init__(self, x, y, batch, group):
+        self.x_pos = x
+        self.y_pos = y
+        self.mummy_image = pyglet.image.load("res/images/mummy.png")
+        self.the_mummy = pyglet.sprite.Sprite(img=self.mummy_image,
+                                              x=self.x_pos, y=self.y_pos,
+                                              batch=batch, group=group)
         self.speed = MUMMY_SPEED
+        self.reset_bools()
+        
+    def reset_bools(self):
+        self.going_left = False
+        self.going_right = False
+        self.going_up = False
+        self.going_down = False
         
     def speed_up(self):
         self.speed = MUMMY_DASH
@@ -47,6 +68,79 @@ class Mummy(pyglet.sprite.Sprite):
     
     def get_speed(self):
         return self.speed
+    
+    def move_down(self):
+        if self.going_left:
+            pyglet.clock.schedule_interval(self.move_mummy_right, 1/120.0)
+        if self.going_right:
+            pyglet.clock.schedule_interval(self.move_mummy_left, 1/120.0)
+        if self.going_up and not self.going_down:
+            pyglet.clock.schedule_interval(self.move_mummy_down, 1/120.0)
+        if not self.going_down:
+            pyglet.clock.schedule_interval(self.move_mummy_down, 1/120.0)
+            self.reset_bools()
+            self.going_down = True
+        
+    def move_up(self):
+        if self.going_left:
+            pyglet.clock.schedule_interval(self.move_mummy_right, 1/120.0)
+        if self.going_right:
+            pyglet.clock.schedule_interval(self.move_mummy_left, 1/120.0)
+        if self.going_down and not self.going_up:
+            pyglet.clock.schedule_interval(self.move_mummy_up, 1/120.0)
+        if not self.going_up:
+            pyglet.clock.schedule_interval(self.move_mummy_up, 1/120.0)
+            self.reset_bools()
+            self.going_up = True
+    
+    def move_left(self):
+        if self.going_up:
+            pyglet.clock.schedule_interval(self.move_mummy_down, 1/120.0)
+        if self.going_down:
+            pyglet.clock.schedule_interval(self.move_mummy_up, 1/120.0)
+        if self.going_right and not self.going_left:
+            pyglet.clock.schedule_interval(self.move_mummy_left, 1/120.0)
+        if not self.going_left:
+            pyglet.clock.schedule_interval(self.move_mummy_left, 1/120.0)
+            self.reset_bools()
+            self.going_left = True
+        
+    def move_right(self):
+        if self.going_up:
+            pyglet.clock.schedule_interval(self.move_mummy_down, 1/120.0)
+        if self.going_down:
+            pyglet.clock.schedule_interval(self.move_mummy_up, 1/120.0)
+        if self.going_left and not self.going_right:
+            pyglet.clock.schedule_interval(self.move_mummy_right, 1/120.0)
+        if not self.going_right:
+            pyglet.clock.schedule_interval(self.move_mummy_right, 1/120.0)
+            self.reset_bools()
+            self.going_right = True
+
+    def reset_x(self):
+        self.the_mummy.x = 0
+        
+    def reset_y(self):
+        self.the_mummy.y = 0
+        
+    def move_mummy_down(self, dt):
+        self.the_mummy.y -= self.speed
+            
+    def move_mummy_up(self, dt):
+        self.the_mummy.y += self.speed
+
+    def move_mummy_left(self, dt):
+        self.the_mummy.x -= self.speed
+            
+    def move_mummy_right(self, dt):
+        self.the_mummy.x += self.speed
+        
+    def get_y(self):
+        return self.the_mummy.y
+    
+    def get_x(self):
+        return self.the_mummy.x
+
 
 
 class Game:
@@ -104,7 +198,7 @@ class Game:
                                            #fullscreen=True,
                                            width=WINDOW_SIZE_X,
                                            height=WINDOW_SIZE_Y)
-        #pyglet.gl.glScalef(1.2, 1.2, 1.2)
+        #pyglet.gl.glScalef(1, 1, 1)
         self.start_current_screen()
         pyglet.app.run()
 
@@ -144,31 +238,98 @@ class ActualGame(Screen):
         self.interface_batch = pyglet.graphics.Batch()
         self.tile_batch = pyglet.graphics.Batch()
         
-        self.text_group = pyglet.graphics.OrderedGroup(3)
-        self.fg_group = pyglet.graphics.OrderedGroup(2)
+        self.text_group = pyglet.graphics.OrderedGroup(4)
+        self.fg_group = pyglet.graphics.OrderedGroup(3)
+        self.plank_group = pyglet.graphics.OrderedGroup(2)
         self.bg2_group = pyglet.graphics.OrderedGroup(1)
         self.bg_group = pyglet.graphics.OrderedGroup(0)
         
         self.interface = Interface(self.fg_group, self.text_group, self.interface_batch)
-#         self.map = Maps(self.group_text, self.batch, self.bonuscontainer_start,
-#                        self.score_scroll.y,
-#                        self.bonuscontainer_end - self.bonuscontainer_start,
-#                        self.score_scroll.height/1.5)
+        self.wood_image = pyglet.image.load("res/images/woodenplank.png")
+        self.plank = pyglet.sprite.Sprite(img=self.wood_image, x=0,
+                                     y=WINDOW_SIZE_Y/1.17, batch=self.interface_batch,
+                                     group=self.plank_group)
+        self.b_map = Maps(self.bg_group, self.tile_batch)
+        self.f_map = Maps(self.bg2_group, self.tile_batch)
+        
+        self.mummy = Mummy(65, 500, self.tile_batch, self.fg_group)
+        pyglet.clock.schedule_interval(self.detect, 1/120.0)
+        
+    def detect(self, dt):
+        if self.mummy.get_x() > 500:
+            print("pass")
+                
+    def on_key_press(self, key, modifiers):
+        if key == self.actual_keys.DOWN:
+            self.mummy.move_down()
+        elif key == self.actual_keys.UP:
+            self.mummy.move_up()
+        elif key == self.actual_keys.LEFT:
+            self.mummy.move_left()
+        elif key == self.actual_keys.RIGHT:
+            self.mummy.move_right()
+
+    
+    def launch_map(self):
+        self.b_map.draw_map(str(self.level) + "b.txt")
+        self.f_map.draw_map(str(self.level) + "m.txt")
 
     def start(self):
-        self.main_menu_keys = pyglet.window.key
+        self.actual_keys = pyglet.window.key
         self.game.window.set_mouse_cursor(self.game.window.get_system_mouse_cursor(None))
+        self.launch_map()
 
     def new_game(self):
         self.game.start_playing()
 
-    def on_key_press(self, symbol, modifiers):
-            pass
-
     def on_draw(self):
         self.game.window.clear()
+        self.tile_batch.draw()
         self.interface_batch.draw()
         
+class Maps:
+    def __init__(self, group, batch):
+        self.group = group
+        self.batch = batch
+        self.tile_x = -32
+        self.tile_y = WINDOW_SIZE_Y-32
+        self.sprites = []
+        self.sprites_x = []
+        self.sand_load = pyglet.image.load("res/images/sand.jpg")
+        self.brick_load = pyglet.image.load("res/images/brick.PNG")
+        
+    def draw_map(self, mapfile):
+        with open("res/maps/" + mapfile, "rt") as map_file:
+            map_data = map_file.read()
+             
+            for letter in map_data:
+                if letter == "s":
+                    self.sand_sprite = pyglet.sprite.Sprite(self.sand_load, x=self.tile_x,
+                                                       y=self.tile_y, batch=self.batch,
+                                                       group=self.group)
+                    self.sprites.append(self.sand_sprite)
+                     
+                elif letter == "b":
+                    self.brick_sprite = pyglet.sprite.Sprite(self.brick_load, x=self.tile_x,
+                                                       y=self.tile_y, batch=self.batch,
+                                                       group=self.group)
+                    self.sprites.append(self.brick_sprite)
+                 
+                elif letter == "[":
+                    self.tile_x = 0
+                 
+                elif letter == "]":
+                    self.tile_y -= 32
+                      
+                self.tile_x += 32
+                
+    def return_sprites(self):
+        return self.sprites
+
+    def return_sprites_x(self):
+        for objects in self.return_sprites():
+            self.sprites_x.append(objects.x)
+        return self.sprites_x
 
 class Interface:
     def __init__(self, group_images, group_text, batch):
@@ -312,7 +473,7 @@ class Bonus(Interface):
         self.document = pyglet.text.document.FormattedDocument(self.bonus_heading)
         self.document.set_style(0, len(self.document.text),
                                 dict(color=(0, 0, 0, 255)))
-        self.document.set_paragraph_style(0, len(self.document.text), dict(align=('center')))
+        self.document.set_paragraph_style(0, len(self.document.text), dict(align=("center")))
          
          
         self.layout = pyglet.text.layout.IncrementalTextLayout(self.document,
@@ -356,67 +517,32 @@ class MainMenu(Screen):
         self.bg_group_2 = pyglet.graphics.OrderedGroup(1)
         self.bg_group = pyglet.graphics.OrderedGroup(0)
         
-        self.logo_image = pyglet.image.load("res/images/logo.png")
-        center_anchor(self.logo_image)
-        self.logo = pyglet.sprite.Sprite(img=self.logo_image, x=self.window_half_x,
-                                         y=WINDOW_SIZE_Y/2+300, batch=self.batch,
-                                         group=self.fg_group)
+        self.logo = image_aligner("res/images/logo.png", self.window_half_x,
+                                  WINDOW_SIZE_Y/2+300, self.batch, self.fg_group)
         
-        self.pyramid_image = pyglet.image.load("res/images/pyramids.png")
-        center_anchor(self.pyramid_image)
-        self.pyramid = pyglet.sprite.Sprite(self.pyramid_image, x=self.window_half_x,
-                                               y=WINDOW_SIZE_Y/3,
-                                               batch=self.batch,
-                                               group=self.bg_group_3)
+        self.pyramid = image_aligner("res/images/pyramids.png", self.window_half_x,
+                                     WINDOW_SIZE_Y/3, self.batch, self.bg_group_3)
         
-        self.sun_image = pyglet.image.load("res/images/sun.jpg")
-        center_anchor(self.sun_image)
-        self.sun = pyglet.sprite.Sprite(self.sun_image, x=self.window_half_x,
-                                               y=WINDOW_SIZE_Y/1.9,
-                                               batch=self.batch,
-                                               group=self.bg_group)
+        self.sun = image_aligner("res/images/sun.jpg", self.window_half_x,
+                                 WINDOW_SIZE_Y/1.9, self.batch, self.bg_group)
         
-        self.sand_image = pyglet.image.load("res/images/sandy.png")
-        center_anchor(self.sand_image)
-        self.sand = pyglet.sprite.Sprite(self.sand_image, x=self.window_half_x,
-                                               y=WINDOW_SIZE_Y/5,
-                                               batch=self.batch,
-                                               group=self.bg_group_4)
+        self.sand = image_aligner("res/images/sandy.png", self.window_half_x,
+                                 WINDOW_SIZE_Y/5, self.batch, self.bg_group_4)
         
-        self.start_image = pyglet.image.load("res/images/main_start.png")
-        center_anchor(self.start_image)
-        self.start_button = pyglet.sprite.Sprite(self.start_image, x=self.window_half_x,
-                                               y=WINDOW_SIZE_Y/2+100,
-                                               batch=self.batch,
-                                               group=self.fg_group)
+        self.start_button = image_aligner("res/images/main_start.png", self.window_half_x,
+                                          WINDOW_SIZE_Y/2+100, self.batch, self.fg_group)
         
-        self.instructions_image = pyglet.image.load("res/images/main_help.png")
-        center_anchor(self.instructions_image)
-        self.instr_button = pyglet.sprite.Sprite(self.instructions_image, x=self.window_half_x,
-                                               y=WINDOW_SIZE_Y/2,
-                                               batch=self.batch,
-                                               group=self.fg_group)
+        self.instr_button = image_aligner("res/images/main_help.png", self.window_half_x,
+                                          WINDOW_SIZE_Y/2, self.batch, self.fg_group)
+
+        self.settings_button = image_aligner("res/images/main_settings.png", self.window_half_x,
+                                             WINDOW_SIZE_Y/2-100, self.batch, self.fg_group)
+
+        self.cloud1 = image_aligner("res/images/cloud.png", self.cloud_start,
+                                     WINDOW_SIZE_Y-300, self.batch, self.bg_group_2)
         
-        self.settings_image = pyglet.image.load("res/images/main_settings.png")
-        center_anchor(self.settings_image)
-        self.settings_button = pyglet.sprite.Sprite(self.settings_image, x=self.window_half_x,
-                                               y=WINDOW_SIZE_Y/2-100,
-                                               batch=self.batch,
-                                               group=self.fg_group)
-        
-        self.cloud_image1 = pyglet.image.load("res/images/cloud.png")
-        center_anchor(self.cloud_image1)
-        self.cloud1 = pyglet.sprite.Sprite(self.cloud_image1, x=self.cloud_start,
-                                               y=WINDOW_SIZE_Y-300,
-                                               batch=self.batch,
-                                               group=self.bg_group_2)
-        
-        self.cloud_image2 = pyglet.image.load("res/images/cloud2.png")
-        center_anchor(self.cloud_image2)
-        self.cloud2 = pyglet.sprite.Sprite(self.cloud_image2, x=self.cloud_start,
-                                               y=WINDOW_SIZE_Y-100,
-                                               batch=self.batch,
-                                               group=self.bg_group_2)
+        self.cloud2 = image_aligner("res/images/cloud2.png", self.cloud_start,
+                                     WINDOW_SIZE_Y-100, self.batch, self.bg_group_2)
         
         self.clouds = [self.cloud1, self.cloud2]
 
