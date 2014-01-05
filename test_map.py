@@ -1,13 +1,15 @@
 import pyglet
 from random import randint
 from math import floor
-#from maps import *
 
+## Important defines.
 WINDOW_SIZE_X = 1300
 WINDOW_SIZE_Y = 1000
 MUMMY_SPEED = 2
 MUMMY_DASH = 3
 PLAYER_SPEED = 2.1
+##
+
 
 # Load the resources from the following folders,
 # then re-index the file resource locations.
@@ -16,25 +18,31 @@ def load_resources():
                             "res/videos", "res/fonts",
                             "res/music", "res/maps"]
     pyglet.resource.reindex()
-    
+
+# Set the anchor points to the center of the image.
 def center_anchor(image):
     image.anchor_x = image.width//2
     image.anchor_y = image.height//2
-    
+
+# Using center_anchor() set the anchor in the center,
+# then return the resulting sprite.
 def image_aligner(img, x_pos, y_pos, batch, group):
-    image_load = pyglet.image.load(img)
-    center_anchor(image_load)
-    image = pyglet.sprite.Sprite(image_load, x=x_pos,
+    image_load = pyglet.image.load(img) # First load the image
+    center_anchor(image_load) # Then center the anchor points
+    image = pyglet.sprite.Sprite(image_load, x=x_pos, # Convert to sprite
                                            y=y_pos,
                                            batch=batch,
                                            group=group)
     return image
-    
+
+# This returns true if the cursor is within an area
+# that is 'clickable'
 def get_area(img, x, y):
         if img.x - img.width/2 < x < img.x + img.width/2 and img.y - img.height/2 < y < img.y + img.height/2:
             return True
 
-
+# Draws a rectangle using the in-built commands of
+# OpenGL.
 class Rectangle(object):
     '''Draws a rectangle into a batch.'''
     def __init__(self, x1, y1, x2, y2, group, batch):
@@ -42,7 +50,8 @@ class Rectangle(object):
             ('v2i', [x1, y1, x2, y1, x2, y2, x1, y2]),
             ('c4B', [0, 0, 0, 255] * 4))
 
-
+# Defines the Mummy, is able to set the Mummy's
+# speed and inform is if the mummy is speeding up.
 class Mummy(pyglet.sprite.Sprite):
     def __init__(self, x, y, batch, group):
         self.x_pos = x
@@ -69,16 +78,25 @@ class Mummy(pyglet.sprite.Sprite):
     def get_speed(self):
         return self.speed
     
+    # This function is similar to the others. Basically, when you want the 
+    # mummy to move down check if it's going left. If it is, then move the
+    # mummy right. Why would we do this? To prevent the mummy from going in
+    # any other direction other than 90 degree angles. Check if it's going
+    # right for the same reason.
     def move_down(self):
         if self.going_left:
             pyglet.clock.schedule_interval(self.move_mummy_right, 1/120.0)
         if self.going_right:
             pyglet.clock.schedule_interval(self.move_mummy_left, 1/120.0)
+    # If it's going up and not already going down then allow the mummy to
+    # reverse the speed at which it was going. Basically to stop.
+    # Then, if it wasn't already going down, allow the mummy to go down.
         if self.going_up and not self.going_down:
             pyglet.clock.schedule_interval(self.move_mummy_down, 1/120.0)
         if not self.going_down:
             pyglet.clock.schedule_interval(self.move_mummy_down, 1/120.0)
-            self.reset_bools()
+            self.reset_bools() # Reset the bools and then set the going down
+                                # bool to true.
             self.going_down = True
         
     def move_up(self):
@@ -142,10 +160,14 @@ class Mummy(pyglet.sprite.Sprite):
         return self.the_mummy.x
 
 
-
+# This class controls the overall mechanics of the game.
+# It allows you to start screens which can be videos,
+# main menu's or even levels. This is instantiated at
+# the very beginning and is passed down to all screens.
 class Game:
     def __init__(self):
-        self.current_level = 0
+        self.current_level = 0  # When we first create the game,
+                                # the level is 0.
         self.current_screen = Video(self)
 
     def load(self):
@@ -169,6 +191,8 @@ class Game:
         self.current_screen.clear()
         self.window.remove_handlers()
 
+    # This is the method that handles the main events.
+    # If the event is not here, then you can't use it.
     def start_current_screen(self):
         self.window.set_handler("on_key_press", self.current_screen.on_key_press)
         self.window.set_handler("on_draw", self.current_screen.on_draw)
@@ -178,18 +202,19 @@ class Game:
         self.current_screen.start()
 
     def goto_next_level(self):
-        "called from within LevelPlayer when the player beats the level"
+        "Called from within LevelPlayer when the player beats the level"
         self.clear_current_screen()
         self.current_level += 1
         self.current_screen = ActualGame(game, self.current_level)
         self.start_current_screen()
 
     def start_playing(self):
-        "called by the main menu when the user selects an option"
+        "Called by the main menu when the user selects an option"
         self.clear_current_screen()
         self.current_screen = ActualGame(game, self.current_level)
         self.start_current_screen()
 
+    # This method is called once: when the game starts.
     def execute(self):
         self.display = pyglet.canvas.Display().get_default_screen()
         self.window = pyglet.window.Window(caption="Prince Tutti",
@@ -198,11 +223,12 @@ class Game:
                                            #fullscreen=True,
                                            width=WINDOW_SIZE_X,
                                            height=WINDOW_SIZE_Y)
-        #pyglet.gl.glScalef(1, 1, 1)
+        #pyglet.gl.glScalef(1, 1, 1) # Can be used to scale the game's contents.
         self.start_current_screen()
         pyglet.app.run()
 
-
+# This class is here so that you can make
+# any large game-wide modifications to the screen.
 class Screen:
     def __init__(self):
         pass
@@ -229,7 +255,8 @@ class Screen:
         pyglet.gl.glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST) 
         pyglet.gl.glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST)
     
-    
+# This class represents the Actual Game. The GUI,
+# the maps are all initialised here.
 class ActualGame(Screen):
     "This class contains all your game logic. This is the class that enables the user to play through a level."
     def __init__(self, game, level_to_play):
@@ -286,7 +313,8 @@ class ActualGame(Screen):
         self.game.window.clear()
         self.tile_batch.draw()
         self.interface_batch.draw()
-        
+
+# Loads maps from res/maps.
 class Maps:
     def __init__(self, group, batch):
         self.group = group
@@ -331,6 +359,9 @@ class Maps:
             self.sprites_x.append(objects.x)
         return self.sprites_x
 
+# Use the interface class to manage the GUI elements
+# on-screen. I have done it like this so that individual
+# elements can be removed if necessary. 
 class Interface:
     def __init__(self, group_images, group_text, batch):
         self.batch = batch
@@ -381,7 +412,7 @@ class Interface:
     def get_score_value(self):
         self.score.return_score()
 
-
+# Updates the score.
 class Score(Interface):
     def __init__(self, group_text, batch, x, y, width, height):
         self.group_text = group_text
@@ -420,7 +451,7 @@ class Score(Interface):
         self.score_num = str(43434)
         self.document.insert_text(len(self.document.text), self.score_num)
 
-
+# Updates the lives.
 class Lives(Interface):
     def __init__(self, group_text, batch, x, y, width, height):
         self.group_text = group_text
@@ -458,7 +489,8 @@ class Lives(Interface):
     def update_lives(self):
         self.lives_num = str(self.lives_num)
         self.document.insert_text(len(self.document.text), self.lives_num)
-        
+
+# Updates the bonus points.
 class Bonus(Interface):
     def __init__(self, group_text, batch, x, y, width, height):
         self.group_text = group_text
@@ -498,8 +530,9 @@ class Bonus(Interface):
         self.bonus_num = str(self.bonus_num)
         self.document.insert_text(len(self.document.text), self.bonus_num)
         
-
-
+# This is the Main Menu screen which is loaded on game start.
+# It includes all the methods necessary for the movement of
+# elements.
 class MainMenu(Screen):
     "This class presents the title screen and options for new game."
     def __init__(self, game):
@@ -675,7 +708,7 @@ class MainMenu(Screen):
         self.game.window.clear()
         self.batch.draw()
         
-
+# The video class. Plays a video.
 class Video(Screen):
     "This class presents the title screen and options for new game."
     def __init__(self, game):
@@ -708,7 +741,7 @@ class Video(Screen):
             self.player.get_texture().blit(WINDOW_SIZE_X/2, WINDOW_SIZE_Y/2) #... Place the video at the following location.
 
 
-
+# First of all load the resources.
 load_resources()
 
 # Run the game!!
