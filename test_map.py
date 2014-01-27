@@ -1,6 +1,7 @@
 import pyglet
 from random import randint
 from math import floor
+from ctypes import *
 
 ## Important defines.
 WINDOW_SIZE_X = 1300
@@ -10,6 +11,52 @@ MUMMY_DASH = 3
 PLAYER_SPEED = 2.1
 ##
 
+collision_group = []
+# needed to cast image data
+
+ 
+def intersect(r1, r2):
+    '''Compute the intersection of two rectangles'''
+    n = Rect( max(r1.x1, r2.x1), max(r1.y1, r2.y1), min(r1.x2, r2.x2), min(r1.y2, r2.y2) )
+    return n
+ 
+def collides(r1, r2):
+    '''Determine whether two rectangles collide'''
+    if r1.x2 < r2.x1 or r1.y2 < r2.y1 or r1.x1 > r2.x2 or r1.y1 > r2.y2:
+        return False
+    return True
+ 
+def from_sprite(s):
+    '''Create a rectangle matching the bounds of the given sprite'''
+    t = s.texture
+    x = int(s.x - t.anchor_x)
+    y = int(s.y - t.anchor_y)
+    return Rect(x-t.width/2, y- t.height/2, x + t.width/2, y + t.height/2)
+ 
+class Rect:
+    '''Fast rectangular collision structure'''
+ 
+    def __init__(self, x1, y1, x2, y2):
+        '''Create a rectangle from a minimum and maximum point'''
+        self.x1, self.y1 = x1, y1
+        self.x2, self.y2 = x2, y2
+        self.height = self.y2 - self.y1
+        self.width = self.x2 - self.x1
+ 
+def get_mask(self):
+    '''Returns the (potentially cached) image data for the sprite'''
+ 
+    t = self.renderable.sprite.texture
+    d = self.terrain.mask
+    # return a tuple containing the image data, along with the width and height
+    return d, t.width, t.height
+ 
+def get_rect(s):
+    '''Returns the bounding rectangle for the sprite'''
+    return from_sprite(s)
+
+def collide_with(ent1, ent2):
+    pass
 
 # Load the resources from the following folders,
 # then re-index the file resource locations.
@@ -153,11 +200,17 @@ class Mummy(pyglet.sprite.Sprite):
     def move_mummy_right(self, dt):
         self.the_mummy.x += self.speed
         
+    def mummy_stop(self):
+        self.speed = 0
+        
     def get_y(self):
         return self.the_mummy.y
     
     def get_x(self):
         return self.the_mummy.x
+    
+    def return_pos(self):
+        return self.the_mummy.position
 
 
 # This class controls the overall mechanics of the game.
@@ -278,13 +331,19 @@ class ActualGame(Screen):
                                      group=self.plank_group)
         self.b_map = Maps(self.bg_group, self.tile_batch)
         self.f_map = Maps(self.bg2_group, self.tile_batch)
+        self.f_map_pos = []
+        self.list_of_pos = 0
         
         self.mummy = Mummy(65, 500, self.tile_batch, self.fg_group)
-        pyglet.clock.schedule_interval(self.detect, 1/120.0)
+        pyglet.clock.schedule_interval(self.detect, 1/240.0)
         
     def detect(self, dt):
-        if self.mummy.get_x() > 500:
-            print("pass")
+        for num in self.list_of_pos:
+            if num[0]-1 <= self.mummy.return_pos()[0] <= num[0]+1 and num[1]-1 <= self.mummy.return_pos()[1] <= num[1]+1:
+                self.mummy.mummy_stop()
+                print("stop")
+            else:
+                self.mummy.reset_speed()
                 
     def on_key_press(self, key, modifiers):
         if key == self.actual_keys.DOWN:
@@ -295,11 +354,16 @@ class ActualGame(Screen):
             self.mummy.move_left()
         elif key == self.actual_keys.RIGHT:
             self.mummy.move_right()
-
     
     def launch_map(self):
         self.b_map.draw_map(str(self.level) + "b.txt")
         self.f_map.draw_map(str(self.level) + "m.txt")
+        
+        for i in self.f_map.return_sprites():
+            self.f_map_pos.append(i.position)
+            
+        self.list_of_pos = set(self.f_map_pos)
+        print(self.list_of_pos)
 
     def start(self):
         self.actual_keys = pyglet.window.key
@@ -319,10 +383,10 @@ class Maps:
     def __init__(self, group, batch):
         self.group = group
         self.batch = batch
-        self.tile_x = -32
-        self.tile_y = WINDOW_SIZE_Y-32
-        self.sprites = []
-        self.sprites_x = []
+        self.tile_x = 0
+        self.tile_y = WINDOW_SIZE_Y
+        self.sprites = collision_group
+        
         self.sand_load = pyglet.image.load("res/images/sand.jpg")
         self.brick_load = pyglet.image.load("res/images/brick.PNG")
         
@@ -332,15 +396,13 @@ class Maps:
              
             for letter in map_data:
                 if letter == "s":
-                    self.sand_sprite = pyglet.sprite.Sprite(self.sand_load, x=self.tile_x,
-                                                       y=self.tile_y, batch=self.batch,
-                                                       group=self.group)
+                    self.sand_sprite = image_aligner(self.sand_load, self.tile_x,
+                                                      self.tile_y, self.batch, self.group)
                     self.sprites.append(self.sand_sprite)
                      
                 elif letter == "b":
-                    self.brick_sprite = pyglet.sprite.Sprite(self.brick_load, x=self.tile_x,
-                                                       y=self.tile_y, batch=self.batch,
-                                                       group=self.group)
+                    self.brick_sprite = image_aligner(self.brick_load, self.tile_x,
+                                                      self.tile_y, self.batch, self.group)
                     self.sprites.append(self.brick_sprite)
                  
                 elif letter == "[":
@@ -352,12 +414,12 @@ class Maps:
                 self.tile_x += 32
                 
     def return_sprites(self):
-        return self.sprites
+        return set(self.sprites)
 
-    def return_sprites_x(self):
-        for objects in self.return_sprites():
-            self.sprites_x.append(objects.x)
-        return self.sprites_x
+#     def return_sprites_x(self):
+#         for objects in self.return_sprites():
+#             self.sprites_x.append(objects.x)
+#         return self.sprites_x
 
 # Use the interface class to manage the GUI elements
 # on-screen. I have done it like this so that individual
