@@ -1,7 +1,6 @@
 import pyglet
 from random import randint
 from math import floor
-from testclass import *
 from ctypes import *
 
 ## Important defines.
@@ -100,22 +99,24 @@ class Rectangle(object):
 
 # Defines the Mummy, is able to set the Mummy's
 # speed and inform is if the mummy is speeding up.
-class Mummy(pyglet.sprite.Sprite):
+class Player(pyglet.sprite.Sprite):
     def __init__(self, x, y, batch, group):
         self.x_pos = x
         self.y_pos = y
-        self.mummy_image = pyglet.image.load("res/images/mummy.png")
+        self.mummy_image = pyglet.image.load("res/images/player.png")
         self.the_mummy = pyglet.sprite.Sprite(img=self.mummy_image,
                                               x=self.x_pos, y=self.y_pos,
                                               batch=batch, group=group)
         self.speed = MUMMY_SPEED
         self.reset_bools()
+        self.going_nowhere = True
         
     def reset_bools(self):
         self.going_left = False
         self.going_right = False
         self.going_up = False
         self.going_down = False
+        self.going_nowhere = False
         
     def speed_up(self):
         self.speed = MUMMY_DASH
@@ -133,15 +134,17 @@ class Mummy(pyglet.sprite.Sprite):
     # right for the same reason.
     def move_down(self):
         if self.going_left:
-            pyglet.clock.schedule_interval(self.move_mummy_right, 1/120.0)
+            pyglet.clock.unschedule(self.move_mummy_left)
+            
         if self.going_right:
-            pyglet.clock.schedule_interval(self.move_mummy_left, 1/120.0)
-    # If it's going up and not already going down then allow the mummy to
-    # reverse the speed at which it was going. Basically to stop.
-    # Then, if it wasn't already going down, allow the mummy to go down.
-        if self.going_up and not self.going_down:
-            pyglet.clock.schedule_interval(self.move_mummy_down, 1/120.0)
-        if not self.going_down:
+            pyglet.clock.unschedule(self.move_mummy_right)
+
+        if self.going_up:
+            pyglet.clock.unschedule(self.move_mummy_up)
+            self.reset_bools()
+            self.going_nowhere = True
+            
+        elif not self.going_down or self.going_nowhere:
             pyglet.clock.schedule_interval(self.move_mummy_down, 1/120.0)
             self.reset_bools() # Reset the bools and then set the going down
                                 # bool to true.
@@ -149,36 +152,42 @@ class Mummy(pyglet.sprite.Sprite):
         
     def move_up(self):
         if self.going_left:
-            pyglet.clock.schedule_interval(self.move_mummy_right, 1/120.0)
+            pyglet.clock.unschedule(self.move_mummy_left)
         if self.going_right:
-            pyglet.clock.schedule_interval(self.move_mummy_left, 1/120.0)
-        if self.going_down and not self.going_up:
-            pyglet.clock.schedule_interval(self.move_mummy_up, 1/120.0)
-        if not self.going_up:
+            pyglet.clock.unschedule(self.move_mummy_right)
+        if self.going_down:
+            pyglet.clock.unschedule(self.move_mummy_down)
+            self.reset_bools()
+            self.going_nowhere = True
+        elif not self.going_up or self.going_nowhere:
             pyglet.clock.schedule_interval(self.move_mummy_up, 1/120.0)
             self.reset_bools()
             self.going_up = True
     
     def move_left(self):
         if self.going_up:
-            pyglet.clock.schedule_interval(self.move_mummy_down, 1/120.0)
+            pyglet.clock.unschedule(self.move_mummy_up)
         if self.going_down:
-            pyglet.clock.schedule_interval(self.move_mummy_up, 1/120.0)
-        if self.going_right and not self.going_left:
-            pyglet.clock.schedule_interval(self.move_mummy_left, 1/120.0)
-        if not self.going_left:
+            pyglet.clock.unschedule(self.move_mummy_down)
+        if self.going_right:
+            pyglet.clock.unschedule(self.move_mummy_right)
+            self.reset_bools()
+            self.going_nowhere = True
+        elif not self.going_left or self.going_nowhere:
             pyglet.clock.schedule_interval(self.move_mummy_left, 1/120.0)
             self.reset_bools()
             self.going_left = True
         
     def move_right(self):
         if self.going_up:
-            pyglet.clock.schedule_interval(self.move_mummy_down, 1/120.0)
+            pyglet.clock.unschedule(self.move_mummy_up)
         if self.going_down:
-            pyglet.clock.schedule_interval(self.move_mummy_up, 1/120.0)
-        if self.going_left and not self.going_right:
-            pyglet.clock.schedule_interval(self.move_mummy_right, 1/120.0)
-        if not self.going_right:
+            pyglet.clock.unschedule(self.move_mummy_down)
+        if self.going_left:
+            pyglet.clock.unschedule(self.move_mummy_left)
+            self.reset_bools()
+            self.going_nowhere = True
+        elif not self.going_right or self.going_nowhere:
             pyglet.clock.schedule_interval(self.move_mummy_right, 1/120.0)
             self.reset_bools()
             self.going_right = True
@@ -335,7 +344,7 @@ class ActualGame(Screen):
         self.f_map_pos = []
         self.list_of_pos = 0
         
-        self.mummy = Mummy(65, 500, self.tile_batch, self.fg_group)
+        self.mummy = Player(65, 500, self.tile_batch, self.fg_group)
         pyglet.clock.schedule_interval(self.detect, 1/240.0)
         
     def detect(self, dt):
@@ -806,7 +815,6 @@ load_resources()
 
 # Run the game!!
 if __name__ == '__main__':
-    hell = testthing
     game = Game()
     game.execute()
 
