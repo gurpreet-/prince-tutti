@@ -1,6 +1,7 @@
 import pyglet
 from random import randint
 from math import floor
+from testclass import *
 from ctypes import *
 
 ## Important defines.
@@ -338,12 +339,13 @@ class ActualGame(Screen):
         pyglet.clock.schedule_interval(self.detect, 1/240.0)
         
     def detect(self, dt):
-        for num in self.list_of_pos:
-            if num[0]-1 <= self.mummy.return_pos()[0] <= num[0]+1 and num[1]-1 <= self.mummy.return_pos()[1] <= num[1]+1:
-                self.mummy.mummy_stop()
-                print("stop")
-            else:
-                self.mummy.reset_speed()
+        pass
+#         for num in self.list_of_pos:
+#             if num[0]-1 <= self.mummy.return_pos()[0] <= num[0]+1 and num[1]-1 <= self.mummy.return_pos()[1] <= num[1]+1:
+#                 self.mummy.mummy_stop()
+#                 print("stop")
+#             else:
+#                 self.mummy.reset_speed()
                 
     def on_key_press(self, key, modifiers):
         if key == self.actual_keys.DOWN:
@@ -358,12 +360,6 @@ class ActualGame(Screen):
     def launch_map(self):
         self.b_map.draw_map(str(self.level) + "b.txt")
         self.f_map.draw_map(str(self.level) + "m.txt")
-        
-        for i in self.f_map.return_sprites():
-            self.f_map_pos.append(i.position)
-            
-        self.list_of_pos = set(self.f_map_pos)
-        print(self.list_of_pos)
 
     def start(self):
         self.actual_keys = pyglet.window.key
@@ -383,8 +379,8 @@ class Maps:
     def __init__(self, group, batch):
         self.group = group
         self.batch = batch
-        self.tile_x = 0
-        self.tile_y = WINDOW_SIZE_Y
+        self.tile_x = -32
+        self.tile_y = WINDOW_SIZE_Y-32
         self.sprites = collision_group
         
         self.sand_load = pyglet.image.load("res/images/sand.jpg")
@@ -396,13 +392,15 @@ class Maps:
              
             for letter in map_data:
                 if letter == "s":
-                    self.sand_sprite = image_aligner(self.sand_load, self.tile_x,
-                                                      self.tile_y, self.batch, self.group)
+                    self.sand_sprite = pyglet.sprite.Sprite(self.sand_load, x=self.tile_x,
+                                                       y=self.tile_y, batch=self.batch,
+                                                       group=self.group)
                     self.sprites.append(self.sand_sprite)
                      
                 elif letter == "b":
-                    self.brick_sprite = image_aligner(self.brick_load, self.tile_x,
-                                                      self.tile_y, self.batch, self.group)
+                    self.brick_sprite = pyglet.sprite.Sprite(self.brick_load, x=self.tile_x,
+                                                       y=self.tile_y, batch=self.batch,
+                                                       group=self.group)
                     self.sprites.append(self.brick_sprite)
                  
                 elif letter == "[":
@@ -808,6 +806,7 @@ load_resources()
 
 # Run the game!!
 if __name__ == '__main__':
+    hell = testthing
     game = Game()
     game.execute()
 
