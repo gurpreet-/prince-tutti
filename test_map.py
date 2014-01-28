@@ -25,13 +25,7 @@ def collides(r1, r2):
     if r1.x2 < r2.x1 or r1.y2 < r2.y1 or r1.x1 > r2.x2 or r1.y1 > r2.y2:
         return False
     return True
- 
-def from_sprite(s):
-    '''Create a rectangle matching the bounds of the given sprite'''
-    t = s.texture
-    x = int(s.x - t.anchor_x)
-    y = int(s.y - t.anchor_y)
-    return Rect(x-t.width/2, y- t.height/2, x + t.width/2, y + t.height/2)
+
  
 class Rect:
     '''Fast rectangular collision structure'''
@@ -61,9 +55,13 @@ def collide_with(ent1, ent2):
 # Load the resources from the following folders,
 # then re-index the file resource locations.
 def load_resources():
-    pyglet.resource.path = ["res", "res/images",
-                            "res/videos", "res/fonts",
-                            "res/music", "res/maps"]
+    pyglet.resource.path = ["res",
+                            "res/images",
+                            "res/videos",
+                            "res/fonts",
+                            "res/music",
+                            "res/maps"]
+    
     pyglet.resource.reindex()
 
 # Set the anchor points to the center of the image.
@@ -87,6 +85,10 @@ def image_aligner(img, x_pos, y_pos, batch, group):
 def get_area(img, x, y):
         if img.x - img.width/2 < x < img.x + img.width/2 and img.y - img.height/2 < y < img.y + img.height/2:
             return True
+        
+def get_sarea(img, x, y):
+        if img.x < x < img.x + img.width and img.y < y < img.y + img.height:
+            return True
 
 # Draws a rectangle using the in-built commands of
 # OpenGL.
@@ -97,17 +99,18 @@ class Rectangle(object):
             ('v2i', [x1, y1, x2, y1, x2, y2, x1, y2]),
             ('c4B', [0, 0, 0, 255] * 4))
 
+
 # Defines the Mummy, is able to set the Mummy's
 # speed and inform is if the mummy is speeding up.
 class Player(pyglet.sprite.Sprite):
     def __init__(self, x, y, batch, group):
         self.x_pos = x
         self.y_pos = y
-        self.mummy_image = pyglet.image.load("res/images/player.png")
-        self.the_mummy = pyglet.sprite.Sprite(img=self.mummy_image,
+        self.player_image = pyglet.image.load("res/images/player.png")
+        self.the_player = pyglet.sprite.Sprite(img=self.player_image,
                                               x=self.x_pos, y=self.y_pos,
                                               batch=batch, group=group)
-        self.speed = MUMMY_SPEED
+        self.speed = PLAYER_SPEED
         self.reset_bools()
         self.going_nowhere = True
         
@@ -118,109 +121,108 @@ class Player(pyglet.sprite.Sprite):
         self.going_down = False
         self.going_nowhere = False
         
-    def speed_up(self):
-        self.speed = MUMMY_DASH
+    # Use this method only for testing speed up.
+#     def speed_up(self):
+#         self.speed = MUMMY_DASH
     
     def reset_speed(self):
-        self.speed = MUMMY_SPEED
+        self.speed = PLAYER_SPEED
     
     def get_speed(self):
         return self.speed
     
-    # This function is similar to the others. Basically, when you want the 
-    # mummy to move down check if it's going left. If it is, then move the
-    # mummy right. Why would we do this? To prevent the mummy from going in
-    # any other direction other than 90 degree angles. Check if it's going
-    # right for the same reason.
+    # Unschedule all movement if the mummy is going any other
+    # direction other than down.
+    # Why would we do this? To prevent the mummy from going in
+    # any other direction other than 90 degree angles.
     def move_down(self):
         if self.going_left:
-            pyglet.clock.unschedule(self.move_mummy_left)
+            pyglet.clock.unschedule(self.move_player_left)
             
         if self.going_right:
-            pyglet.clock.unschedule(self.move_mummy_right)
+            pyglet.clock.unschedule(self.move_player_right)
 
         if self.going_up:
-            pyglet.clock.unschedule(self.move_mummy_up)
+            pyglet.clock.unschedule(self.move_player_up)
             self.reset_bools()
             self.going_nowhere = True
             
         elif not self.going_down or self.going_nowhere:
-            pyglet.clock.schedule_interval(self.move_mummy_down, 1/120.0)
-            self.reset_bools() # Reset the bools and then set the going down
-                                # bool to true.
-            self.going_down = True
+            pyglet.clock.schedule_interval(self.move_player_down, 1/120.0)
+            self.reset_bools() # Reset the bools...
+            self.going_down = True # Then set the going down variable to true.
         
     def move_up(self):
         if self.going_left:
-            pyglet.clock.unschedule(self.move_mummy_left)
+            pyglet.clock.unschedule(self.move_player_left)
         if self.going_right:
-            pyglet.clock.unschedule(self.move_mummy_right)
+            pyglet.clock.unschedule(self.move_player_right)
         if self.going_down:
-            pyglet.clock.unschedule(self.move_mummy_down)
+            pyglet.clock.unschedule(self.move_player_down)
             self.reset_bools()
             self.going_nowhere = True
         elif not self.going_up or self.going_nowhere:
-            pyglet.clock.schedule_interval(self.move_mummy_up, 1/120.0)
+            pyglet.clock.schedule_interval(self.move_player_up, 1/120.0)
             self.reset_bools()
             self.going_up = True
     
     def move_left(self):
         if self.going_up:
-            pyglet.clock.unschedule(self.move_mummy_up)
+            pyglet.clock.unschedule(self.move_player_up)
         if self.going_down:
-            pyglet.clock.unschedule(self.move_mummy_down)
+            pyglet.clock.unschedule(self.move_player_down)
         if self.going_right:
-            pyglet.clock.unschedule(self.move_mummy_right)
+            pyglet.clock.unschedule(self.move_player_right)
             self.reset_bools()
             self.going_nowhere = True
         elif not self.going_left or self.going_nowhere:
-            pyglet.clock.schedule_interval(self.move_mummy_left, 1/120.0)
+            pyglet.clock.schedule_interval(self.move_player_left, 1/120.0)
             self.reset_bools()
             self.going_left = True
         
     def move_right(self):
         if self.going_up:
-            pyglet.clock.unschedule(self.move_mummy_up)
+            pyglet.clock.unschedule(self.move_player_up)
         if self.going_down:
-            pyglet.clock.unschedule(self.move_mummy_down)
+            pyglet.clock.unschedule(self.move_player_down)
         if self.going_left:
-            pyglet.clock.unschedule(self.move_mummy_left)
+            pyglet.clock.unschedule(self.move_player_left)
             self.reset_bools()
             self.going_nowhere = True
         elif not self.going_right or self.going_nowhere:
-            pyglet.clock.schedule_interval(self.move_mummy_right, 1/120.0)
+            pyglet.clock.schedule_interval(self.move_player_right, 1/120.0)
             self.reset_bools()
             self.going_right = True
 
     def reset_x(self):
-        self.the_mummy.x = 0
+        self.the_player.x = 0
         
     def reset_y(self):
-        self.the_mummy.y = 0
+        self.the_player.y = 0
         
-    def move_mummy_down(self, dt):
-        self.the_mummy.y -= self.speed
+    def move_player_down(self, dt):
+        self.the_player.y -= self.speed
             
-    def move_mummy_up(self, dt):
-        self.the_mummy.y += self.speed
+    def move_player_up(self, dt):
+        self.the_player.y += self.speed
 
-    def move_mummy_left(self, dt):
-        self.the_mummy.x -= self.speed
+    def move_player_left(self, dt):
+        self.the_player.x -= self.speed
             
-    def move_mummy_right(self, dt):
-        self.the_mummy.x += self.speed
+    def move_player_right(self, dt):
+        self.the_player.x += self.speed
         
-    def mummy_stop(self):
+    def player_stop(self):
         self.speed = 0
         
     def get_y(self):
-        return self.the_mummy.y
+        return self.the_player.y
     
     def get_x(self):
-        return self.the_mummy.x
+        return self.the_player.x
     
     def return_pos(self):
-        return self.the_mummy.position
+        return self.the_player.position
 
 
 # This class controls the overall mechanics of the game.
@@ -293,6 +295,7 @@ class Game:
                                            #fullscreen=True,
                                            width=WINDOW_SIZE_X,
                                            height=WINDOW_SIZE_Y)
+        # Try to set the window icon to the key.
         self.window.set_icon(pyglet.image.load("res/images/key.png"))
         #pyglet.gl.glScalef(1, 1, 1) # Can be used to scale the game's contents.
         self.start_current_screen()
@@ -301,6 +304,7 @@ class Game:
 # This class is here so that you can make
 # any large game-wide modifications to the screen.
 class Screen:
+    "Any pyglet methods not present here will not work anywhere."
     def __init__(self):
         pass
  
@@ -336,50 +340,70 @@ class ActualGame(Screen):
         self.interface_batch = pyglet.graphics.Batch()
         self.tile_batch = pyglet.graphics.Batch()
         
+        # Set up the groups so that they stack correctly.
         self.text_group = pyglet.graphics.OrderedGroup(4)
         self.fg_group = pyglet.graphics.OrderedGroup(3)
         self.plank_group = pyglet.graphics.OrderedGroup(2)
         self.bg2_group = pyglet.graphics.OrderedGroup(1)
         self.bg_group = pyglet.graphics.OrderedGroup(0)
         
+        # Create the graphical user interface
         self.interface = Interface(self.fg_group, self.text_group, self.interface_batch)
         self.wood_image = pyglet.image.load("res/images/woodenplank.png")
         self.plank = pyglet.sprite.Sprite(img=self.wood_image, x=0,
                                      y=WINDOW_SIZE_Y/1.17, batch=self.interface_batch,
                                      group=self.plank_group)
+        # Load the maps
         self.b_map = Maps(self.bg_group, self.tile_batch)
         self.f_map = Maps(self.bg2_group, self.tile_batch)
-        self.f_map_pos = []
-        self.list_of_pos = 0
         
+        # Create the sound manager
         self.soundplayer = pyglet.media.ManagedSoundPlayer() # Load the sound player
         self.soundplayer.push_handlers(on_eos=self.on_eos)
         self.source = pyglet.media.StreamingSource() # Load the streaming device source
-        self.audio_path = "res/music/bonus.mp3"
+        self.audio_path = "res/music/bonus.mp3" # First queue the bonus music
         self.load_media = pyglet.media.load(self.audio_path)
         self.on_to_next = False
-        self.soundplayer.queue(self.load_media) # Queue the sound
-        self.soundplayer.queue(pyglet.media.load("res/music/main.mp3"))
+        self.soundplayer.queue(self.load_media)
+        self.soundplayer.queue(pyglet.media.load("res/music/main.mp3")) # Then the main music
+        self.soundplayer.play()
         
+        
+        
+        # Create the actual player who plays in the game
         self.player = Player(65, 500, self.tile_batch, self.fg_group)
-        pyglet.clock.schedule_interval(self.detect, 1/240.0)      
+        
+        # Useful for collision detection
+        pyglet.clock.schedule_interval(self.detect, 1/30.0)
+        pyglet.clock.schedule_interval(self.collision, 1/60.0)
+        pyglet.clock.schedule_interval(self.set_pos, 1/5.0)
+        self.o_x = self.player.the_player.x
+        self.o_y = self.player.the_player.y
         
     def detect(self, dt):
-        if (self.player.x_pos > WINDOW_SIZE_X or 
-            self.player.x_pos < 0 or 
-            self.player.y_pos > WINDOW_SIZE_Y or
-            self.player.y_pos < 0):
+        # Check where the player is
+        if (self.player.the_player.x > WINDOW_SIZE_X or 
+            self.player.the_player.x < 0 or 
+            self.player.the_player.y > WINDOW_SIZE_Y or
+            self.player.the_player.y < 0):
             print("out of bounds")
-#         for num in self.list_of_pos:
-#             if num[0]-1 <= self.mummy.return_pos()[0] <= num[0]+1 and num[1]-1 <= self.mummy.return_pos()[1] <= num[1]+1:
-#                 self.mummy.mummy_stop()
-#                 print("stop")
-#             else:
-#                 self.mummy.reset_speed()
-                
+        
+    def set_pos(self, dt):
+        self.o_x = self.player.the_player.x
+        self.o_y = self.player.the_player.y
+            
+    def collision(self, dt):
+        for sprite in self.f_map.return_sprites():
+            if get_sarea(sprite, self.player.the_player.x + 5, self.player.the_player.y + 5):
+                if get_sarea(sprite, self.player.the_player.x - 5, self.player.the_player.y - 5):
+                    print("collision!")
+                    self.player.the_player.x = self.o_x
+                    self.player.the_player.y = self.o_y
+
     def on_key_press(self, key, modifiers):
         if key == self.actual_keys.DOWN:
-            self.player.move_down()
+            self.player.move_down() # Move the player down if user hits down key
+                                    # See Player class for more information
         elif key == self.actual_keys.UP:
             self.player.move_up()
         elif key == self.actual_keys.LEFT:
@@ -388,13 +412,16 @@ class ActualGame(Screen):
             self.player.move_right()
     
     def launch_map(self):
-        self.str_level = str(self.level)
+        self.str_level = str(self.level) # Convert the current level to a string
+        # Append the suffix for the background and the foreground respectively.
         self.b_map.draw_map(self.str_level + "b.txt")
         self.f_map.draw_map(self.str_level + "m.txt")
+        # If the level name contains the string 'bonus' then load the
+        # bonus music, otherwise don't.
         if "bonus" in self.str_level:
             self.soundplayer.next()
         elif not ("bonus" in self.str_level):
-            self.soundplayer.next() # Play the video
+            self.soundplayer.next()
 
     def start(self):
         self.actual_keys = pyglet.window.key
@@ -408,19 +435,26 @@ class ActualGame(Screen):
         self.game.window.clear()
         self.tile_batch.draw()
         self.interface_batch.draw()
-        
+    
+    # This method is called whenever the player reaches end of source.
     def on_eos(self):
-        print("fin")
+        self.soundplayer.next()
+        self.soundplayer.next()
 
 # Loads maps from res/maps.
 class Maps:
     def __init__(self, group, batch):
+        # Make sure the maps are in the correct group and batch.
         self.group = group
         self.batch = batch
+        # The starting position for the tile is -32 because
+        # the width and height is 32x32
         self.tile_x = -32
+        # Same goes for the placement of the tile's y value.
         self.tile_y = WINDOW_SIZE_Y-32
-        self.sprites = collision_group
+        self.sprites = []
         
+        # Load all the necessary images for the maps.
         self.sand_load = pyglet.image.load("res/images/sand.jpg")
         self.brick_load = pyglet.image.load("res/images/brick.png")
         self.brickl_load = pyglet.image.load("res/images/brick-left.png")
@@ -435,13 +469,13 @@ class Maps:
     def draw_map(self, mapfile):
         with open("res/maps/" + mapfile, "rt") as map_file:
             map_data = map_file.read()
-            
+            # Here is what each letter corresponds to:
             # s = sand (bg)
             # u = brick under sand (bg)
-            # ; = stone under stand (bg)
+            # ; = stone under sand (bg)
             # b = brick
             # t = torch
-            # l = main brick shadow on left
+            # l = brick shadow on left (main)
             # k = key
             # c = coin
             # g = gate for key
@@ -451,61 +485,65 @@ class Maps:
                     self.sand_sprite = pyglet.sprite.Sprite(self.sand_load, x=self.tile_x,
                                                        y=self.tile_y, batch=self.batch,
                                                        group=self.group)
+                    # Keep appending the sprites to the list.
+                    # If we have a list of all the sprites perhaps
+                    # we can iterate through them and see if they
+                    # get hit by the player.
                     self.sprites.append(self.sand_sprite)
                      
                 elif letter == "b":
                     self.brick_sprite = pyglet.sprite.Sprite(self.brick_load, x=self.tile_x,
                                                        y=self.tile_y, batch=self.batch,
                                                        group=self.group)
-                    self.sprites.append(self.brick_sprite)
+                    self.sprites.append(self.brick_sprite) # See above
 
                 elif letter == "e":
                     self.exit_sprite = pyglet.sprite.Sprite(self.exit_gate, x=self.tile_x,
                                                        y=self.tile_y, batch=self.batch,
                                                        group=self.group)
-                    self.sprites.append(self.exit_sprite)
+                    self.sprites.append(self.exit_sprite) # See above
 
                 elif letter == "u":
                     self.bricksand_sprite = pyglet.sprite.Sprite(self.brick_sand, x=self.tile_x,
                                                        y=self.tile_y, batch=self.batch,
                                                        group=self.group)
-                    self.sprites.append(self.bricksand_sprite)
+                    self.sprites.append(self.bricksand_sprite) # See above
 
                 elif letter == ";":
                     self.stonesand_sprite = pyglet.sprite.Sprite(self.stone_sand, x=self.tile_x,
                                                        y=self.tile_y, batch=self.batch,
                                                        group=self.group)
-                    self.sprites.append(self.stonesand_sprite)
+                    self.sprites.append(self.stonesand_sprite) # See above
                     
                 elif letter == "l":
                     self.brickl_sprite = pyglet.sprite.Sprite(self.brickl_load, x=self.tile_x,
                                                        y=self.tile_y, batch=self.batch,
                                                        group=self.group)
-                    self.sprites.append(self.brickl_sprite)
+                    self.sprites.append(self.brickl_sprite) # See above
                     
                 elif letter == "k":
                     self.key_sprite = pyglet.sprite.Sprite(self.key, x=self.tile_x,
                                                        y=self.tile_y, batch=self.batch,
                                                        group=self.group)
-                    self.sprites.append(self.key_sprite)
+                    self.sprites.append(self.key_sprite) # See above
 
                 elif letter == "c":
                     self.coin_sprite = pyglet.sprite.Sprite(self.coin, x=self.tile_x,
                                                        y=self.tile_y, batch=self.batch,
                                                        group=self.group)
-                    self.sprites.append(self.coin_sprite)
+                    self.sprites.append(self.coin_sprite) # See above
                     
                 elif letter == "t":
                     self.torch_sprite = pyglet.sprite.Sprite(self.torch, x=self.tile_x,
                                                        y=self.tile_y, batch=self.batch,
                                                        group=self.group)
-                    self.sprites.append(self.torch_sprite)
+                    self.sprites.append(self.torch_sprite) # See above
                     
                 elif letter == "g":
                     self.gate_sprite = pyglet.sprite.Sprite(self.gate, x=self.tile_x,
                                                        y=self.tile_y, batch=self.batch,
                                                        group=self.group)
-                    self.sprites.append(self.gate_sprite)
+                    self.sprites.append(self.gate_sprite) # See above
                  
                 elif letter == "[":
                     self.tile_x = 0
@@ -515,6 +553,9 @@ class Maps:
                       
                 self.tile_x += 32
                 
+    # Returns the list of sprites as a set.
+    # A set allows for much faster iteration than a list.
+    # A set is like a list.
     def return_sprites(self):
         return set(self.sprites)
 
@@ -527,6 +568,7 @@ class Maps:
 # on-screen. I have done it like this so that individual
 # elements can be removed if necessary. 
 class Interface:
+    '''This class controls the GUI of the game.'''
     def __init__(self, group_images, group_text, batch):
         self.batch = batch
         self.group_images = group_images
@@ -544,17 +586,27 @@ class Interface:
         self.score_scroll = pyglet.sprite.Sprite(img=self.score_image, x=self.logo.width + self.spacing,
                                              y=WINDOW_SIZE_Y/1.17, batch=self.batch,
                                              group=self.group_images)
-            
+        
+        # Gets the position where the lives, bonus, score container will start.
+        # This is necessary because we may scale (or move) the scroll behind it at some point.
+        # If we scale the scroll, then we lose the positioning.
+        # The following code aims to stop the positioning of the messing up.
+        # This code will position everything correctly even if you move the scroll.
+        
+        # First of all we need to find where the lives container will start.
+        # And where it will end.
         self.livescontainer_start = self.score_scroll.x + self.scroll_handle_width
         self.livescontainer_end = self.livescontainer_start + self.score_scroll.width/4
     
-
+        # The ending of the lives container is the start of the bonus container.
         self.bonuscontainer_start = self.livescontainer_end
         self.bonuscontainer_end = self.bonuscontainer_start + self.score_scroll.width/4
     
+        # The ending of the bonus container is the start of the score container.
         self.scorecontainer_start = self.bonuscontainer_end
         self.scorecontainer_end = self.scorecontainer_start - self.scroll_handle_width + self.score_scroll.width/2
         
+        # Initialise all the classes that control the GUI.
         self.score = Score(self.group_text, self.batch, self.scorecontainer_start,
                            self.score_scroll.y,
                            self.scorecontainer_end - self.scorecontainer_start,
@@ -570,9 +622,11 @@ class Interface:
                            self.bonuscontainer_end - self.bonuscontainer_start,
                            self.score_scroll.height/1.5)
         
+    # Call this whenever you need to update the score.
     def update_score_value(self):
         self.score.update_score()
-        
+    
+    # Call this to return the score value.
     def get_score_value(self):
         self.score.return_score()
 
@@ -702,7 +756,7 @@ class MainMenu(Screen):
     def __init__(self, game):
         self.game = game
         pyglet.font.add_directory("res/fonts")
-        self.text1 = "Start. \n"
+        # This is where the cloud starts
         self.cloud_start = -WINDOW_SIZE_X/10
         self.cloud_end = WINDOW_SIZE_X + WINDOW_SIZE_X/10
         self.window_half_x = WINDOW_SIZE_X/2
@@ -714,6 +768,11 @@ class MainMenu(Screen):
         self.bg_group_2 = pyglet.graphics.OrderedGroup(1)
         self.bg_group = pyglet.graphics.OrderedGroup(0)
         
+        #self.rectangle = Rectangle(50, 50, 100, 100, self.fg_group, self.batch)
+        
+        # Whenever we create an image, we want to set its anchor point to its center.
+        # We do this using image_aligner()
+        # This is so that we don't have weirdly aligned images.
         self.logo = image_aligner("res/images/logo.png", self.window_half_x,
                                   WINDOW_SIZE_Y/2+300, self.batch, self.fg_group)
         
@@ -743,7 +802,9 @@ class MainMenu(Screen):
         
         self.clouds = [self.cloud1, self.cloud2]
 
-        
+        # We scale everything so that it does not mess up
+        # the position of the images when the user goes into
+        # or out of fullscreen mode.
         self.cloud1.scale = 0.3
         self.cloud2.scale = 0.3
         self.start_button.scale = 0.13
@@ -752,7 +813,7 @@ class MainMenu(Screen):
         self.sun.scale = 0.92
         self.sand.scale = 0.86
         self.pyramid.scale = 1.3
-
+        
         self.count = 0
         self.reset_count = 160
         self.lower_count = self.reset_count/4
@@ -763,6 +824,7 @@ class MainMenu(Screen):
         pyglet.clock.schedule_interval(self.counter, 1/120.0)
         pyglet.clock.schedule_interval(self.move_clouds, 1/120.0)
         
+        # Load the player to play some music!
         self.player = pyglet.media.Player()
         self.music = pyglet.resource.media("rumba.mp3")
         self.player.queue(self.music)
@@ -780,8 +842,12 @@ class MainMenu(Screen):
             self.count = 0
         self.count += 1
             
+    # This method is called every 120th of a second.
+    # It basically gives a cool floating effect to the logo.
     def move_logo(self, dt):
         # If the count is less than 120 but greater than 80
+        # Move the logo down 12 pixels.
+        # The count is set by counter().
         if self.upper_count > self.count >= self.middle_count:
             self.logo.y -= 12 * dt
         
@@ -888,7 +954,7 @@ class MainMenu(Screen):
         
 # The video class. Plays a video.
 class Video(Screen):
-    "This class presents the title screen and options for new game."
+    "This class presents the video."
     def __init__(self, game):
         self.game = game
         self.video_path = "res/videos/intro_vid.wmv" # Where's the arbitrary video located?
@@ -906,33 +972,34 @@ class Video(Screen):
     def on_key_press(self, symbol, modifiers):
         if symbol == self.video_keys.SPACE or symbol == self.video_keys.ENTER:
             #self.game.window.set_fullscreen(True)
-            self.game.clear_current_screen()
-            self.game.load_mainmenu()
-            self.game.start_current_screen()
+            self.next_screen_now()
             self.on_to_next = True
             
     def on_mouse_press(self, x, y, button, modifiers):
-         pass
+        self.next_screen_now()
+        self.on_to_next = True
      
-    def on_eos(self):
-        if not self.on_to_next:
-            self.game.clear_current_screen()
-            self.game.load_mainmenu()
-            self.game.start_current_screen()
-            
+    def on_eos(self): # If the video has stopped playing and...
+        if not self.on_to_next: # if we haven't already gone onto the next screen...
+            self.next_screen_now() # stop the video playing.
+    
+    # Stops the video from playing. Goes onto the main menu.        
+    def next_screen_now(self):
+        self.player.volume = 0 # Stops the video from making anymore annoying sounds.
+        self.game.clear_current_screen()
+        self.game.load_mainmenu()
+        self.game.start_current_screen()
+
     def clear(self):
         self.game.window.clear()
             
     def on_draw(self):
         if self.player.source and self.player.source.video_format: # If we have the source of the video and the format of it..
-            self.player.get_texture().blit(WINDOW_SIZE_X/4, WINDOW_SIZE_Y/4) #... Place the video at the following location.
+            self.player.get_texture().blit(WINDOW_SIZE_X/4, WINDOW_SIZE_Y/4) # place the video at the following location.
 
 
-# First of all load the resources.
-load_resources()
-
-# Run the game!!
-if __name__ == '__main__':
-    game = Game()
-    game.execute()
+load_resources() # First of all load the resources.
+if __name__ == '__main__': # Run the game!!
+    game = Game() # Load game class
+    game.execute() # Then execute it
 
