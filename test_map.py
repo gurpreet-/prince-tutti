@@ -270,6 +270,13 @@ class Game:
         self.current_level += 1
         self.current_screen = ActualGame(game, self.current_level)
         self.start_current_screen()
+        
+    def goto_bonus_level(self):
+        "Called from within LevelPlayer when the player beats the level"
+        self.clear_current_screen()
+        self.bonus_level = str(self.current_level) + "bonus"
+        self.current_screen = ActualGame(game, self.bonus_level)
+        self.start_current_screen()
 
     def start_playing(self):
         "Called by the main menu when the user selects an option"
@@ -345,11 +352,24 @@ class ActualGame(Screen):
         self.f_map_pos = []
         self.list_of_pos = 0
         
-        self.mummy = Player(65, 500, self.tile_batch, self.fg_group)
-        pyglet.clock.schedule_interval(self.detect, 1/240.0)
+        self.soundplayer = pyglet.media.ManagedSoundPlayer() # Load the sound player
+        self.soundplayer.push_handlers(on_eos=self.on_eos)
+        self.source = pyglet.media.StreamingSource() # Load the streaming device source
+        self.audio_path = "res/music/bonus.mp3"
+        self.load_media = pyglet.media.load(self.audio_path)
+        self.on_to_next = False
+        self.soundplayer.queue(self.load_media) # Queue the sound
+        self.soundplayer.queue(pyglet.media.load("res/music/main.mp3"))
+        
+        self.player = Player(65, 500, self.tile_batch, self.fg_group)
+        pyglet.clock.schedule_interval(self.detect, 1/240.0)      
         
     def detect(self, dt):
-        pass
+        if (self.player.x_pos > WINDOW_SIZE_X or 
+            self.player.x_pos < 0 or 
+            self.player.y_pos > WINDOW_SIZE_Y or
+            self.player.y_pos < 0):
+            print("out of bounds")
 #         for num in self.list_of_pos:
 #             if num[0]-1 <= self.mummy.return_pos()[0] <= num[0]+1 and num[1]-1 <= self.mummy.return_pos()[1] <= num[1]+1:
 #                 self.mummy.mummy_stop()
@@ -359,17 +379,22 @@ class ActualGame(Screen):
                 
     def on_key_press(self, key, modifiers):
         if key == self.actual_keys.DOWN:
-            self.mummy.move_down()
+            self.player.move_down()
         elif key == self.actual_keys.UP:
-            self.mummy.move_up()
+            self.player.move_up()
         elif key == self.actual_keys.LEFT:
-            self.mummy.move_left()
+            self.player.move_left()
         elif key == self.actual_keys.RIGHT:
-            self.mummy.move_right()
+            self.player.move_right()
     
     def launch_map(self):
-        self.b_map.draw_map(str(self.level) + "b.txt")
-        self.f_map.draw_map(str(self.level) + "m.txt")
+        self.str_level = str(self.level)
+        self.b_map.draw_map(self.str_level + "b.txt")
+        self.f_map.draw_map(self.str_level + "m.txt")
+        if "bonus" in self.str_level:
+            self.soundplayer.next()
+        elif not ("bonus" in self.str_level):
+            self.soundplayer.next() # Play the video
 
     def start(self):
         self.actual_keys = pyglet.window.key
@@ -383,6 +408,9 @@ class ActualGame(Screen):
         self.game.window.clear()
         self.tile_batch.draw()
         self.interface_batch.draw()
+        
+    def on_eos(self):
+        print("fin")
 
 # Loads maps from res/maps.
 class Maps:
@@ -401,6 +429,8 @@ class Maps:
         self.key = pyglet.image.load("res/images/key.png")
         self.coin = pyglet.image.load("res/images/coin.png")
         self.torch = pyglet.image.load("res/images/torch.png")
+        self.gate = pyglet.image.load("res/images/gate.png")
+        self.exit_gate = pyglet.image.load("res/images/chain2.png")
         
     def draw_map(self, mapfile):
         with open("res/maps/" + mapfile, "rt") as map_file:
@@ -414,6 +444,8 @@ class Maps:
             # l = main brick shadow on left
             # k = key
             # c = coin
+            # g = gate for key
+            # e = gate for exit
             for letter in map_data:
                 if letter == "s":
                     self.sand_sprite = pyglet.sprite.Sprite(self.sand_load, x=self.tile_x,
@@ -426,6 +458,12 @@ class Maps:
                                                        y=self.tile_y, batch=self.batch,
                                                        group=self.group)
                     self.sprites.append(self.brick_sprite)
+
+                elif letter == "e":
+                    self.exit_sprite = pyglet.sprite.Sprite(self.exit_gate, x=self.tile_x,
+                                                       y=self.tile_y, batch=self.batch,
+                                                       group=self.group)
+                    self.sprites.append(self.exit_sprite)
 
                 elif letter == "u":
                     self.bricksand_sprite = pyglet.sprite.Sprite(self.brick_sand, x=self.tile_x,
@@ -462,6 +500,12 @@ class Maps:
                                                        y=self.tile_y, batch=self.batch,
                                                        group=self.group)
                     self.sprites.append(self.torch_sprite)
+                    
+                elif letter == "g":
+                    self.gate_sprite = pyglet.sprite.Sprite(self.gate, x=self.tile_x,
+                                                       y=self.tile_y, batch=self.batch,
+                                                       group=self.group)
+                    self.sprites.append(self.gate_sprite)
                  
                 elif letter == "[":
                     self.tile_x = 0
@@ -753,9 +797,6 @@ class MainMenu(Screen):
         elif self.count <= self.lower_count:
             self.logo.y += 6 * dt
             
-    def on_eos(self):
-        pass
-            
     def start(self):
         self.main_menu_keys = pyglet.window.key
         self.mouse = pyglet.window.mouse
@@ -772,6 +813,7 @@ class MainMenu(Screen):
     def on_mouse_press(self, x, y, button, modifiers):
         if button == self.mouse.LEFT:
             if self.is_on_start:
+                self.player.pause()
                 self.game.start_playing()
             
     def on_mouse_motion(self, x, y, dx, dy):
@@ -851,13 +893,15 @@ class Video(Screen):
         self.game = game
         self.video_path = "res/videos/intro_vid.wmv" # Where's the arbitrary video located?
         self.player = pyglet.media.Player() # Load the video player
+        self.player.push_handlers(on_eos=self.on_eos)
         self.source = pyglet.media.StreamingSource() # Load the streaming device source
         self.load_media = pyglet.media.load(self.video_path) # Actually load the video
+        self.on_to_next = False
+        self.player.queue(self.load_media) # Queue the video
+        self.player.play() # Play the video
     
     def start(self):
         self.video_keys = pyglet.window.key
-        self.player.queue(self.load_media) # Queue the video
-        self.player.play() # Play the video
 
     def on_key_press(self, symbol, modifiers):
         if symbol == self.video_keys.SPACE or symbol == self.video_keys.ENTER:
@@ -865,16 +909,23 @@ class Video(Screen):
             self.game.clear_current_screen()
             self.game.load_mainmenu()
             self.game.start_current_screen()
+            self.on_to_next = True
             
     def on_mouse_press(self, x, y, button, modifiers):
          pass
+     
+    def on_eos(self):
+        if not self.on_to_next:
+            self.game.clear_current_screen()
+            self.game.load_mainmenu()
+            self.game.start_current_screen()
             
     def clear(self):
         self.game.window.clear()
             
     def on_draw(self):
         if self.player.source and self.player.source.video_format: # If we have the source of the video and the format of it..
-            self.player.get_texture().blit(WINDOW_SIZE_X/2, WINDOW_SIZE_Y/2) #... Place the video at the following location.
+            self.player.get_texture().blit(WINDOW_SIZE_X/4, WINDOW_SIZE_Y/4) #... Place the video at the following location.
 
 
 # First of all load the resources.
