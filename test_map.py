@@ -8,7 +8,7 @@ WINDOW_SIZE_X = 1300
 WINDOW_SIZE_Y = 1000
 MUMMY_SPEED = 2
 MUMMY_DASH = 3
-PLAYER_SPEED = 2.1
+PLAYER_SPEED = 2.15
 ##
 
 collision_group = []
@@ -286,6 +286,7 @@ class Game:
                                            #fullscreen=True,
                                            width=WINDOW_SIZE_X,
                                            height=WINDOW_SIZE_Y)
+        self.window.set_icon(pyglet.image.load("res/images/key.png"))
         #pyglet.gl.glScalef(1, 1, 1) # Can be used to scale the game's contents.
         self.start_current_screen()
         pyglet.app.run()
@@ -393,12 +394,26 @@ class Maps:
         self.sprites = collision_group
         
         self.sand_load = pyglet.image.load("res/images/sand.jpg")
-        self.brick_load = pyglet.image.load("res/images/brick.PNG")
+        self.brick_load = pyglet.image.load("res/images/brick.png")
+        self.brickl_load = pyglet.image.load("res/images/brick-left.png")
+        self.brick_sand = pyglet.image.load("res/images/brick-sand.jpg")
+        self.stone_sand = pyglet.image.load("res/images/stone-sand.jpg")
+        self.key = pyglet.image.load("res/images/key.png")
+        self.coin = pyglet.image.load("res/images/coin.png")
+        self.torch = pyglet.image.load("res/images/torch.png")
         
     def draw_map(self, mapfile):
         with open("res/maps/" + mapfile, "rt") as map_file:
             map_data = map_file.read()
-             
+            
+            # s = sand (bg)
+            # u = brick under sand (bg)
+            # ; = stone under stand (bg)
+            # b = brick
+            # t = torch
+            # l = main brick shadow on left
+            # k = key
+            # c = coin
             for letter in map_data:
                 if letter == "s":
                     self.sand_sprite = pyglet.sprite.Sprite(self.sand_load, x=self.tile_x,
@@ -411,6 +426,42 @@ class Maps:
                                                        y=self.tile_y, batch=self.batch,
                                                        group=self.group)
                     self.sprites.append(self.brick_sprite)
+
+                elif letter == "u":
+                    self.bricksand_sprite = pyglet.sprite.Sprite(self.brick_sand, x=self.tile_x,
+                                                       y=self.tile_y, batch=self.batch,
+                                                       group=self.group)
+                    self.sprites.append(self.bricksand_sprite)
+
+                elif letter == ";":
+                    self.stonesand_sprite = pyglet.sprite.Sprite(self.stone_sand, x=self.tile_x,
+                                                       y=self.tile_y, batch=self.batch,
+                                                       group=self.group)
+                    self.sprites.append(self.stonesand_sprite)
+                    
+                elif letter == "l":
+                    self.brickl_sprite = pyglet.sprite.Sprite(self.brickl_load, x=self.tile_x,
+                                                       y=self.tile_y, batch=self.batch,
+                                                       group=self.group)
+                    self.sprites.append(self.brickl_sprite)
+                    
+                elif letter == "k":
+                    self.key_sprite = pyglet.sprite.Sprite(self.key, x=self.tile_x,
+                                                       y=self.tile_y, batch=self.batch,
+                                                       group=self.group)
+                    self.sprites.append(self.key_sprite)
+
+                elif letter == "c":
+                    self.coin_sprite = pyglet.sprite.Sprite(self.coin, x=self.tile_x,
+                                                       y=self.tile_y, batch=self.batch,
+                                                       group=self.group)
+                    self.sprites.append(self.coin_sprite)
+                    
+                elif letter == "t":
+                    self.torch_sprite = pyglet.sprite.Sprite(self.torch, x=self.tile_x,
+                                                       y=self.tile_y, batch=self.batch,
+                                                       group=self.group)
+                    self.sprites.append(self.torch_sprite)
                  
                 elif letter == "[":
                     self.tile_x = 0
@@ -675,7 +726,10 @@ class MainMenu(Screen):
         self.stop_playing = False
         
         self.in_upper = False
+        # Bools to check where the mouse is
         self.is_on_start = False
+        self.is_on_help = False
+        self.is_on_settings = False
         
     def counter(self, dt):
         if self.count >= self.reset_count:
@@ -705,6 +759,7 @@ class MainMenu(Screen):
     def start(self):
         self.main_menu_keys = pyglet.window.key
         self.mouse = pyglet.window.mouse
+        self.hand = self.game.window.get_system_mouse_cursor('hand')
         self.i = 0
 
     def handle_new_game(self):
@@ -722,20 +777,32 @@ class MainMenu(Screen):
     def on_mouse_motion(self, x, y, dx, dy):
         self.x = x
         self.y = y
-        self.dy = dy
-        pyglet.clock.schedule_interval(self.move_elements, 1/120.0)
-        if WINDOW_SIZE_Y/2 < self.y:
-            self.in_upper = True
-            
-        elif WINDOW_SIZE_Y/2 >= self.y:
-            self.in_upper = False
+#         self.dy = dy
+#         pyglet.clock.schedule_interval(self.move_elements, 1/120.0)
+#         if WINDOW_SIZE_Y/2 < self.y:
+#             self.in_upper = True
+#             
+#         elif WINDOW_SIZE_Y/2 >= self.y:
+#             self.in_upper = False
             
         if get_area(self.start_button, x, y):
-            self.hand = self.game.window.get_system_mouse_cursor('hand')
             self.game.window.set_mouse_cursor(self.hand)
             self.is_on_start = True
-        elif not get_area(self.start_button, x, y):
+            
+        elif get_area(self.instr_button, x, y):
+            self.game.window.set_mouse_cursor(self.hand)
+            self.is_on_help = True
+            
+        elif get_area(self.settings_button, x, y):
+            self.game.window.set_mouse_cursor(self.hand)
+            self.is_on_settings = True
+        
+        elif not (get_area(self.start_button, x, y) and 
+                  get_area(self.instr_button, x, y) and 
+                  get_area(self.settings_button, x, y)):
             self.game.window.set_mouse_cursor(self.game.window.get_system_mouse_cursor(None))
+            self.is_on_settings = False
+            self.is_on_help = False
             self.is_on_start = False
         
     def move_elements(self, dt):
