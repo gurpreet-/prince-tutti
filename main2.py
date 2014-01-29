@@ -1,5 +1,4 @@
 import pyglet
-from math import floor
 from ctypes import *
 import load, player, menu, interface, map
 
