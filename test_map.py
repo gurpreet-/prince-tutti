@@ -11,47 +11,107 @@ MUMMY_DASH = 3
 PLAYER_SPEED = 2.15
 ##
 
-collision_group = []
-# needed to cast image data
-
- 
-def intersect(r1, r2):
-    '''Compute the intersection of two rectangles'''
-    n = Rect( max(r1.x1, r2.x1), max(r1.y1, r2.y1), min(r1.x2, r2.x2), min(r1.y2, r2.y2) )
-    return n
- 
-def collides(r1, r2):
-    '''Determine whether two rectangles collide'''
-    if r1.x2 < r2.x1 or r1.y2 < r2.y1 or r1.x1 > r2.x2 or r1.y1 > r2.y2:
-        return False
-    return True
-
- 
 class Rect:
     '''Fast rectangular collision structure'''
- 
+    
     def __init__(self, x1, y1, x2, y2):
         '''Create a rectangle from a minimum and maximum point'''
         self.x1, self.y1 = x1, y1
         self.x2, self.y2 = x2, y2
-        self.height = self.y2 - self.y1
-        self.width = self.x2 - self.x1
- 
-def get_mask(self):
-    '''Returns the (potentially cached) image data for the sprite'''
- 
-    t = self.renderable.sprite.texture
-    d = self.terrain.mask
-    # return a tuple containing the image data, along with the width and height
-    return d, t.width, t.height
- 
-def get_rect(s):
+        
+    def intersect(self, r):
+        '''Compute the intersection of two rectangles'''
+        n = Rect( max(self.x1, r.x1), max(self.y1, r.y1), min(self.x2, r.x2), min(self.y2, r.y2) )
+        return n
+        
+    def collides(self, r):
+        '''Determine whether two rectangles collide'''
+        if self.x2 < r.x1 or self.y2 < r.y1 or self.x1 > r.x2 or self.y1 > r.y2:
+            return False
+        return True
+    
+    @property
+    def width(self):
+        return self.x2 - self.x1
+    
+    @property
+    def height(self):
+        return self.y2 - self.y1
+    
+    def __repr__(self):
+        return '[%d %d %d %d]' % (self.x1, self.y1, self.x2, self.y2)
+    
+    @staticmethod
+    def from_sprite(s):
+        '''Create a rectangle matching the bounds of the given sprite'''
+        i = (s._texture if not s._animation else s._animation.frames[s._frame_index].image)
+        x = int(s.x - i.anchor_x)
+        y = int(s.y - i.anchor_y)
+        return Rect(x, y, x + s.width, y + s.height)
+    
+    def get_image(self):
+        '''Returns the (potentially cached) image data for the sprite'''
+        image_data_cache = {}
+        # if this is an animated sprite, grab the current frame
+        if self.s._animation:
+            i = self.s._animation.frames[self.s._frame_index].image
+        # otherwise just grab the image
+        else:
+            i = self.s._texture
+        
+        # if the image is already cached, use the cached copy
+        if i in image_data_cache:
+            d = image_data_cache[i]
+        # otherwise grab the image's alpha channel, and cache it
+        else:
+            d = i.get_image_data().get_data('A', i.width)
+            image_data_cache[i] = d
+        
+        # return a tuple containing the image data, along with the width and height
+        return d, i.width, i.height
+    
+def get_rect(sprite):
     '''Returns the bounding rectangle for the sprite'''
-    return from_sprite(s)
-
-def collide_with(ent1, ent2):
-    pass
-
+    return Rect.from_sprite(sprite)
+ 
+def collide(lhs, rhs, offset2 = None):
+    '''Checks for collision between two sprites'''
+    
+    # first check if the bounds overlap, no need to go further if they don't
+    r1, r2 = get_rect(lhs), get_rect(rhs)
+    if offset2 is not None:
+        r2.x1 += offset2[0]
+        r2.x2 += offset2[0]
+        r2.y1 += offset2[1]
+        r2.y2 += offset2[1]
+        
+    if r1.collides(r2):
+        # calculate the overlapping area
+        ri = r1.intersect(r2)
+        
+        # figure out the offsets of the overlapping area in each sprite
+        offx1, offy1 = int(ri.x1 - r1.x1), int(ri.y1 - r1.y1)
+        offx2, offy2 = int(ri.x1 - r2.x1), int(ri.y1 - r2.y1)
+        
+        # grab the image data
+        d1, d2 = lhs.get_image(), rhs.get_image()
+        
+        # and cast it to something we can operate on (it starts as a string)
+        p1 = cast(d1[0], POINTER(c_ubyte))
+        p2 = cast(d2[0], POINTER(c_ubyte))
+        
+        # for each overlapping pixel, check for a collision
+        for i in range(0, ri.width):
+            for j in range(0, ri.height):
+                c1 = p1[(offx1+i) + (j + offy1)*d1[1]]
+                c2 = p2[(offx2+i) + (j + offy2)*d2[1]]
+                
+                # if both pixels are non-empty, we have a collision
+                if c1 > 0 and c2 > 0:
+                    return True
+    
+    # no collision found
+    return False
 # Load the resources from the following folders,
 # then re-index the file resource locations.
 def load_resources():
@@ -327,8 +387,7 @@ class Screen:
         pass
 
     def on_draw(self):
-        pyglet.gl.glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST) 
-        pyglet.gl.glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST)
+        pass
     
 # This class represents the Actual Game. The GUI,
 # the maps are all initialised here.
@@ -376,9 +435,6 @@ class ActualGame(Screen):
         # Useful for collision detection
         pyglet.clock.schedule_interval(self.detect, 1/30.0)
         pyglet.clock.schedule_interval(self.collision, 1/60.0)
-        pyglet.clock.schedule_interval(self.set_pos, 1/5.0)
-        self.o_x = self.player.the_player.x
-        self.o_y = self.player.the_player.y
         
     def detect(self, dt):
         # Check where the player is
@@ -387,18 +443,15 @@ class ActualGame(Screen):
             self.player.the_player.y > WINDOW_SIZE_Y or
             self.player.the_player.y < 0):
             print("out of bounds")
-        
-    def set_pos(self, dt):
-        self.o_x = self.player.the_player.x
-        self.o_y = self.player.the_player.y
             
     def collision(self, dt):
-        for sprite in self.f_map.return_sprites():
-            if get_sarea(sprite, self.player.the_player.x + 5, self.player.the_player.y + 5):
-                if get_sarea(sprite, self.player.the_player.x - 5, self.player.the_player.y - 5):
-                    print("collision!")
-                    self.player.the_player.x = self.o_x
-                    self.player.the_player.y = self.o_y
+        self.player_rect = Rect(self.player.the_player.x, self.player.the_player.y, 
+                                self.player.the_player.x + self.player.the_player.width, 
+                                self.player.the_player.y + self.player.the_player.height)
+        for rectangles in self.f_map.return_sprites():
+            if collide(rectangles, self.player.the_player):
+                print("collision..")
+            
 
     def on_key_press(self, key, modifiers):
         if key == self.actual_keys.DOWN:
@@ -559,11 +612,14 @@ class Maps:
     def return_sprites(self):
         return set(self.sprites)
 
-#     def return_sprites_x(self):
-#         for objects in self.return_sprites():
-#             self.sprites_x.append(objects.x)
-#         return self.sprites_x
-
+    def return_srectangles(self):
+        self.rect_array = []
+        for sprite in self.return_sprites():
+            self.rect_array.append(Rect(sprite.x, sprite.y, 
+                                          sprite.x + sprite.width, 
+                                          sprite.y + sprite.height))
+        return set(self.rect_array)
+    
 # Use the interface class to manage the GUI elements
 # on-screen. I have done it like this so that individual
 # elements can be removed if necessary. 
