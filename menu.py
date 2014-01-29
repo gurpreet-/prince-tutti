@@ -2,6 +2,7 @@ import pyglet
 import main2
 import load, player, interface, map
 from random import randint
+from math import floor
 
 WINDOW_SIZE_X = 1300
 WINDOW_SIZE_Y = 1000
