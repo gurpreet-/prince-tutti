@@ -49,32 +49,32 @@ class Rect:
         y = int(s.y - i.anchor_y)
         return Rect(x, y, x + s.width, y + s.height)
     
-    def get_image(self):
-        '''Returns the (potentially cached) image data for the sprite'''
-        image_data_cache = {}
-        # if this is an animated sprite, grab the current frame
-        if self.s._animation:
-            i = self.s._animation.frames[self.s._frame_index].image
-        # otherwise just grab the image
-        else:
-            i = self.s._texture
-        
-        # if the image is already cached, use the cached copy
-        if i in image_data_cache:
-            d = image_data_cache[i]
-        # otherwise grab the image's alpha channel, and cache it
-        else:
-            d = i.get_image_data().get_data('A', i.width)
-            image_data_cache[i] = d
-        
-        # return a tuple containing the image data, along with the width and height
-        return d, i.width, i.height
-    
 def get_rect(sprite):
     '''Returns the bounding rectangle for the sprite'''
     return Rect.from_sprite(sprite)
+
+def get_image(sprite):
+    '''Returns the (potentially cached) image data for the sprite'''
+    image_data_cache = {}
+    # if this is an animated sprite, grab the current frame
+    if sprite._animation:
+        i = sprite._animation.frames[sprite._frame_index].image
+    # otherwise just grab the image
+    else:
+        i = sprite._texture
+    
+    # if the image is already cached, use the cached copy
+    if i in image_data_cache:
+        d = image_data_cache[i]
+    # otherwise grab the image's alpha channel, and cache it
+    else:
+        d = i.get_image_data().get_data('A', i.width)
+        image_data_cache[i] = d
+    
+    # return a tuple containing the image data, along with the width and height
+    return d, i.width, i.height
  
-def collide(lhs, rhs, offset2 = None):
+def collide(lhs, rhs, offset2=[-1, -2]):
     '''Checks for collision between two sprites'''
     
     # first check if the bounds overlap, no need to go further if they don't
@@ -94,7 +94,7 @@ def collide(lhs, rhs, offset2 = None):
         offx2, offy2 = int(ri.x1 - r2.x1), int(ri.y1 - r2.y1)
         
         # grab the image data
-        d1, d2 = lhs.get_image(), rhs.get_image()
+        d1, d2 = get_image(lhs), get_image(rhs)
         
         # and cast it to something we can operate on (it starts as a string)
         p1 = cast(d1[0], POINTER(c_ubyte))
@@ -109,9 +109,9 @@ def collide(lhs, rhs, offset2 = None):
                 # if both pixels are non-empty, we have a collision
                 if c1 > 0 and c2 > 0:
                     return True
-    
     # no collision found
     return False
+
 # Load the resources from the following folders,
 # then re-index the file resource locations.
 def load_resources():
@@ -174,6 +174,11 @@ class Player(pyglet.sprite.Sprite):
         self.reset_bools()
         self.going_nowhere = True
         
+        self.allowed_down = True
+        self.allowed_up = True
+        self.allowed_left = True
+        self.allowed_right = True
+        
     def reset_bools(self):
         self.going_left = False
         self.going_right = False
@@ -196,63 +201,67 @@ class Player(pyglet.sprite.Sprite):
     # Why would we do this? To prevent the mummy from going in
     # any other direction other than 90 degree angles.
     def move_down(self):
-        if self.going_left:
-            pyglet.clock.unschedule(self.move_player_left)
-            
-        if self.going_right:
-            pyglet.clock.unschedule(self.move_player_right)
-
-        if self.going_up:
-            pyglet.clock.unschedule(self.move_player_up)
-            self.reset_bools()
-            self.going_nowhere = True
-            
-        elif not self.going_down or self.going_nowhere:
-            pyglet.clock.schedule_interval(self.move_player_down, 1/120.0)
-            self.reset_bools() # Reset the bools...
-            self.going_down = True # Then set the going down variable to true.
+        if self.allowed_down:
+            if self.going_left:
+                pyglet.clock.unschedule(self.move_player_left)
+                
+            if self.going_right:
+                pyglet.clock.unschedule(self.move_player_right)
+    
+            if self.going_up:
+                pyglet.clock.unschedule(self.move_player_up)
+                self.reset_bools()
+                self.going_nowhere = True
+                
+            elif not self.going_down or self.going_nowhere:
+                pyglet.clock.schedule_interval(self.move_player_down, 1/120.0)
+                self.reset_bools() # Reset the bools...
+                self.going_down = True # Then set the going down variable to true.
         
     def move_up(self):
-        if self.going_left:
-            pyglet.clock.unschedule(self.move_player_left)
-        if self.going_right:
-            pyglet.clock.unschedule(self.move_player_right)
-        if self.going_down:
-            pyglet.clock.unschedule(self.move_player_down)
-            self.reset_bools()
-            self.going_nowhere = True
-        elif not self.going_up or self.going_nowhere:
-            pyglet.clock.schedule_interval(self.move_player_up, 1/120.0)
-            self.reset_bools()
-            self.going_up = True
+        if self.allowed_up:
+            if self.going_left:
+                pyglet.clock.unschedule(self.move_player_left)
+            if self.going_right:
+                pyglet.clock.unschedule(self.move_player_right)
+            if self.going_down:
+                pyglet.clock.unschedule(self.move_player_down)
+                self.reset_bools()
+                self.going_nowhere = True
+            elif not self.going_up or self.going_nowhere:
+                pyglet.clock.schedule_interval(self.move_player_up, 1/120.0)
+                self.reset_bools()
+                self.going_up = True
     
     def move_left(self):
-        if self.going_up:
-            pyglet.clock.unschedule(self.move_player_up)
-        if self.going_down:
-            pyglet.clock.unschedule(self.move_player_down)
-        if self.going_right:
-            pyglet.clock.unschedule(self.move_player_right)
-            self.reset_bools()
-            self.going_nowhere = True
-        elif not self.going_left or self.going_nowhere:
-            pyglet.clock.schedule_interval(self.move_player_left, 1/120.0)
-            self.reset_bools()
-            self.going_left = True
+        if self.allowed_left:
+            if self.going_up:
+                pyglet.clock.unschedule(self.move_player_up)
+            if self.going_down:
+                pyglet.clock.unschedule(self.move_player_down)
+            if self.going_right:
+                pyglet.clock.unschedule(self.move_player_right)
+                self.reset_bools()
+                self.going_nowhere = True
+            elif not self.going_left or self.going_nowhere:
+                pyglet.clock.schedule_interval(self.move_player_left, 1/120.0)
+                self.reset_bools()
+                self.going_left = True
         
     def move_right(self):
-        if self.going_up:
-            pyglet.clock.unschedule(self.move_player_up)
-        if self.going_down:
-            pyglet.clock.unschedule(self.move_player_down)
-        if self.going_left:
-            pyglet.clock.unschedule(self.move_player_left)
-            self.reset_bools()
-            self.going_nowhere = True
-        elif not self.going_right or self.going_nowhere:
-            pyglet.clock.schedule_interval(self.move_player_right, 1/120.0)
-            self.reset_bools()
-            self.going_right = True
+        if self.allowed_right:
+            if self.going_up:
+                pyglet.clock.unschedule(self.move_player_up)
+            if self.going_down:
+                pyglet.clock.unschedule(self.move_player_down)
+            if self.going_left:
+                pyglet.clock.unschedule(self.move_player_left)
+                self.reset_bools()
+                self.going_nowhere = True
+            elif not self.going_right or self.going_nowhere:
+                pyglet.clock.schedule_interval(self.move_player_right, 1/120.0)
+                self.reset_bools()
+                self.going_right = True
 
     def reset_x(self):
         self.the_player.x = 0
@@ -426,15 +435,14 @@ class ActualGame(Screen):
         self.soundplayer.queue(self.load_media)
         self.soundplayer.queue(pyglet.media.load("res/music/main.mp3")) # Then the main music
         self.soundplayer.play()
-        
-        
-        
+
         # Create the actual player who plays in the game
-        self.player = Player(65, 500, self.tile_batch, self.fg_group)
-        
+        self.player = Player(65, 480, self.tile_batch, self.fg_group)
+        self.o_x = 0
+        self.o_y = 0
         # Useful for collision detection
         pyglet.clock.schedule_interval(self.detect, 1/30.0)
-        pyglet.clock.schedule_interval(self.collision, 1/60.0)
+        pyglet.clock.schedule_interval(self.collision, 1/4.0)
         
     def detect(self, dt):
         # Check where the player is
@@ -445,12 +453,31 @@ class ActualGame(Screen):
             print("out of bounds")
             
     def collision(self, dt):
-        self.player_rect = Rect(self.player.the_player.x, self.player.the_player.y, 
-                                self.player.the_player.x + self.player.the_player.width, 
-                                self.player.the_player.y + self.player.the_player.height)
         for rectangles in self.f_map.return_sprites():
-            if collide(rectangles, self.player.the_player):
-                print("collision..")
+            if get_rect(rectangles).collides(Rect(self.player.the_player.x-10, 
+                                                  self.player.the_player.y-1, 
+                                                  self.player.the_player.x, 
+                                                  self.player.the_player.y+1)):
+                print("collides on left")
+                continue 
+            if get_rect(rectangles).collides(Rect(self.player.the_player.x, 
+                                      self.player.the_player.y-1, 
+                                      self.player.the_player.x+30, 
+                                      self.player.the_player.y+1)):
+                print("collides on right")
+                continue
+            if get_rect(rectangles).collides(Rect(self.player.the_player.x-1, 
+                                      self.player.the_player.y, 
+                                      self.player.the_player.x+1, 
+                                      self.player.the_player.y+25)):
+                print("collides on top")
+                continue
+            if get_rect(rectangles).collides(Rect(self.player.the_player.x, 
+                                      self.player.the_player.y-10, 
+                                      self.player.the_player.x+1, 
+                                      self.player.the_player.y+5)):
+                print("collides on bottom")
+                continue
             
 
     def on_key_press(self, key, modifiers):
