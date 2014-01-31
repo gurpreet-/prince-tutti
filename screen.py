@@ -76,9 +76,9 @@ class ActualGame(Screen):
         # Create the actual player who plays in the game
         self.player = player.Player(68, 480, self.tile_batch, self.fg_group)
         # Useful for collision detection
-        pyglet.clock.schedule_interval(self.gen_rects, 1/4.0)
+        pyglet.clock.schedule_interval(self.gen_rects, 1/15.0)
         pyglet.clock.schedule_interval(self.detect, 1/2.0)
-        pyglet.clock.schedule_interval(self.collision, 1/4.0)
+        pyglet.clock.schedule_interval(self.collision, 1/15.0)
 #         pyglet.clock.schedule_interval(self.timer, 1/2.0)
         self.rectl = 0
         self.rectr = 0
@@ -86,21 +86,21 @@ class ActualGame(Screen):
         self.rectd = 0
         
     def gen_rects(self, dt):
-        self.rectl = Rect(self.player.the_player.x-5, 
-                          self.player.the_player.y+5, 
-                          self.player.the_player.x+4, 
-                          self.player.the_player.y+10)
-        self.rectr = Rect(self.player.the_player.x-2, 
-                          self.player.the_player.y+1, 
-                          self.player.the_player.x+1, 
+        self.rectl = Rect(self.player.the_player.x-9, 
+                          self.player.the_player.y-3, 
+                          self.player.the_player.x+10, 
                           self.player.the_player.y+5)
+        self.rectr = Rect(self.player.the_player.x, 
+                          self.player.the_player.y-2, 
+                          self.player.the_player.x+20, 
+                          self.player.the_player.y+18)
         self.rectu = Rect(self.player.the_player.x+2, 
                           self.player.the_player.y+10, 
                           self.player.the_player.x+15, 
-                          self.player.the_player.y+40)
-        self.rectd = Rect(self.player.the_player.x, 
-                            self.player.the_player.y-20, 
-                            self.player.the_player.x+1, 
+                          self.player.the_player.y+28)
+        self.rectd = Rect(self.player.the_player.x-2, 
+                            self.player.the_player.y-15, 
+                            self.player.the_player.x+4, 
                             self.player.the_player.y-10)
         
     def detect(self, dt):

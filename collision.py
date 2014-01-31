@@ -62,44 +62,6 @@ def get_image(sprite):
     
     # return a tuple containing the image data, along with the width and height
     return d, i.width, i.height
- 
-def collide(lhs, rhs, offset2=[-1, -2]):
-    '''Checks for collision between two sprites'''
-    
-    # first check if the bounds overlap, no need to go further if they don't
-    r1, r2 = get_rect(lhs), get_rect(rhs)
-    if offset2 is not None:
-        r2.x1 += offset2[0]
-        r2.x2 += offset2[0]
-        r2.y1 += offset2[1]
-        r2.y2 += offset2[1]
-        
-    if r1.collides(r2):
-        # calculate the overlapping area
-        ri = r1.intersect(r2)
-        
-        # figure out the offsets of the overlapping area in each sprite
-        offx1, offy1 = int(ri.x1 - r1.x1), int(ri.y1 - r1.y1)
-        offx2, offy2 = int(ri.x1 - r2.x1), int(ri.y1 - r2.y1)
-        
-        # grab the image data
-        d1, d2 = get_image(lhs), get_image(rhs)
-        
-        # and cast it to something we can operate on (it starts as a string)
-        
-        # for each overlapping pixel, check for a collision
-        for i in range(0, ri.width):
-            for j in range(0, ri.height):
-                c1 = p1[(offx1+i) + (j + offy1)*d1[1]]
-                c2 = p2[(offx2+i) + (j + offy2)*d2[1]]
-                
-                # if both pixels are non-empty, we have a collision
-                if c1 > 0 and c2 > 0:
-                    return True
-    # no collision found
-    return False
-
-
 
 # This returns true if the cursor is within an area
 # that is 'clickable'

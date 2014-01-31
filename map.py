@@ -20,7 +20,15 @@ class Maps:
         # Load all the necessary images for the maps.
         self.sand_load = pyglet.image.load("res/images/sand.jpg")
         self.brick_load = pyglet.image.load("res/images/brick.png")
-        self.brickl_load = pyglet.image.load("res/images/brick-left.png")
+        self.brick_1x38 = pyglet.image.load("res/images/brick-1x38.png")
+        self.brick_3x12 = pyglet.image.load("res/images/brick-3x12.png")
+        self.brick_13x1 = pyglet.image.load("res/images/brick-13x1.png")
+        self.brick_27x1 = pyglet.image.load("res/images/brick-27x1.png")
+        self.brick_3x1 = pyglet.image.load("res/images/brick-3x1.png")
+        self.brick_1x3 = pyglet.image.load("res/images/brick-1x3.png")
+        self.brick_1x6 = pyglet.image.load("res/images/brick-1x6.png")
+        self.brick_1x22 = pyglet.image.load("res/images/brick-1x22.png")
+        
         self.brick_sand = pyglet.image.load("res/images/brick-sand.jpg")
         self.stone_sand = pyglet.image.load("res/images/stone-sand.jpg")
         self.key = pyglet.image.load("res/images/key.png")
@@ -36,6 +44,15 @@ class Maps:
             map_data = map_file.read()
             # Here is what each letter corresponds to:
             # s = sand (bg)
+            # 3 = brick 1x38
+            # 1 = brick 1x3
+            # 3 = brick 3x12
+            # 2 = 27x1
+            # 4 = 3x1
+            # 5 = 1x22
+            # 6 = 1x6
+            # 9 = 13x1
+            # 7 = 27x1
             # u = brick under sand (bg)
             # ; = stone under sand (bg)
             # b = brick
@@ -60,6 +77,48 @@ class Maps:
                                                        y=self.tile_y, batch=self.batch,
                                                        group=self.group)
                     self.sprites.append(self.brick_sprite) # See above
+                    
+                elif letter == "1":
+                    self.b1x3 = pyglet.sprite.Sprite(self.brick_1x3, x=self.tile_x,
+                                                       y=self.tile_y, batch=self.batch,
+                                                       group=self.group)
+                    self.sprites.append(self.b1x3) # See above
+                    
+                elif letter == "3":
+                    self.b1x38 = pyglet.sprite.Sprite(self.brick_1x38, x=self.tile_x,
+                                                       y=self.tile_y, batch=self.batch,
+                                                       group=self.group)
+                    self.sprites.append(self.b1x38) # See above
+                    
+                elif letter == "9":
+                    self.b13x1 = pyglet.sprite.Sprite(self.brick_13x1, x=self.tile_x,
+                                                       y=self.tile_y, batch=self.batch,
+                                                       group=self.group)
+                    self.sprites.append(self.b13x1) # See above
+
+                elif letter == "4":
+                    self.b3x1 = pyglet.sprite.Sprite(self.brick_3x1, x=self.tile_x,
+                                                       y=self.tile_y, batch=self.batch,
+                                                       group=self.group)
+                    self.sprites.append(self.b3x1) # See above
+                    
+                elif letter == "5":
+                    self.b1x22 = pyglet.sprite.Sprite(self.brick_1x22, x=self.tile_x,
+                                                       y=self.tile_y, batch=self.batch,
+                                                       group=self.group)
+                    self.sprites.append(self.b1x22) # See above
+                    
+                elif letter == "6":
+                    self.b1x6 = pyglet.sprite.Sprite(self.brick_1x6, x=self.tile_x,
+                                                       y=self.tile_y, batch=self.batch,
+                                                       group=self.group)
+                    self.sprites.append(self.b1x6) # See above
+                    
+                elif letter == "7":
+                    self.b27x1 = pyglet.sprite.Sprite(self.brick_27x1, x=self.tile_x,
+                                                       y=self.tile_y, batch=self.batch,
+                                                       group=self.group)
+                    self.sprites.append(self.b27x1) # See above
 
                 elif letter == "e":
                     self.exit_sprite = pyglet.sprite.Sprite(self.exit_gate, x=self.tile_x,
