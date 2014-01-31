@@ -62,25 +62,46 @@ class ActualGame(Screen):
         self.b_map = map.Maps(self.bg_group, self.tile_batch)
         self.f_map = map.Maps(self.bg2_group, self.tile_batch)
         
-        
         # Create the sound manager
         self.soundplayer = pyglet.media.ManagedSoundPlayer() # Load the sound player
         self.soundplayer.push_handlers(on_eos=self.on_eos)
         self.source = pyglet.media.StreamingSource() # Load the streaming device source
         self.audio_path = "res/music/bonus.mp3" # First queue the bonus music
-        #self.load_media = pyglet.media.load(self.audio_path)
+        self.load_media = pyglet.media.load(self.audio_path)
         self.on_to_next = False
-        #self.soundplayer.queue(self.load_media)
-        #self.soundplayer.queue(pyglet.media.load("res/music/main.mp3")) # Then the main music
-        #self.soundplayer.play()
+        self.soundplayer.queue(self.load_media)
+        self.soundplayer.queue(pyglet.media.load("res/music/main.mp3")) # Then the main music
+        self.soundplayer.play()
 
         # Create the actual player who plays in the game
-        self.player = player.Player(65, 480, self.tile_batch, self.fg_group)
-        self.o_x = 0
-        self.o_y = 0
+        self.player = player.Player(68, 480, self.tile_batch, self.fg_group)
         # Useful for collision detection
-        pyglet.clock.schedule_interval(self.detect, 1/30.0)
+        pyglet.clock.schedule_interval(self.gen_rects, 1/4.0)
+        pyglet.clock.schedule_interval(self.detect, 1/2.0)
         pyglet.clock.schedule_interval(self.collision, 1/4.0)
+#         pyglet.clock.schedule_interval(self.timer, 1/2.0)
+        self.rectl = 0
+        self.rectr = 0
+        self.rectu = 0
+        self.rectd = 0
+        
+    def gen_rects(self, dt):
+        self.rectl = Rect(self.player.the_player.x-5, 
+                          self.player.the_player.y+5, 
+                          self.player.the_player.x+4, 
+                          self.player.the_player.y+10)
+        self.rectr = Rect(self.player.the_player.x-2, 
+                          self.player.the_player.y+1, 
+                          self.player.the_player.x+1, 
+                          self.player.the_player.y+5)
+        self.rectu = Rect(self.player.the_player.x+2, 
+                          self.player.the_player.y+10, 
+                          self.player.the_player.x+15, 
+                          self.player.the_player.y+40)
+        self.rectd = Rect(self.player.the_player.x, 
+                            self.player.the_player.y-20, 
+                            self.player.the_player.x+1, 
+                            self.player.the_player.y-10)
         
     def detect(self, dt):
         # Check where the player is
@@ -91,32 +112,19 @@ class ActualGame(Screen):
             print("out of bounds")
             
     def collision(self, dt):
+        self.player.allow_bools()
         for rectangles in self.f_map.return_sprites():
-            if get_rect(rectangles).collides(Rect(self.player.the_player.x-10, 
-                                                  self.player.the_player.y-1, 
-                                                  self.player.the_player.x, 
-                                                  self.player.the_player.y+1)):
-                print("collides on left")
-                continue 
-            if get_rect(rectangles).collides(Rect(self.player.the_player.x, 
-                                      self.player.the_player.y-1, 
-                                      self.player.the_player.x+30, 
-                                      self.player.the_player.y+1)):
-                print("collides on right")
-                continue
-            if get_rect(rectangles).collides(Rect(self.player.the_player.x-1, 
-                                      self.player.the_player.y, 
-                                      self.player.the_player.x+1, 
-                                      self.player.the_player.y+25)):
-                print("collides on top")
-                continue
-            if get_rect(rectangles).collides(Rect(self.player.the_player.x, 
-                                      self.player.the_player.y-10, 
-                                      self.player.the_player.x+1, 
-                                      self.player.the_player.y+5)):
-                print("collides on bottom")
-                continue
-            
+            if get_rect(rectangles).collides(self.rectl):
+                self.player.no_left()
+ 
+            if get_rect(rectangles).collides(self.rectr):
+                self.player.no_right()
+             
+            if get_rect(rectangles).collides(self.rectu):
+                self.player.no_up()
+             
+            if get_rect(rectangles).collides(self.rectd):
+                self.player.no_down()
 
     def on_key_press(self, key, modifiers):
         if key == self.actual_keys.DOWN:
@@ -134,23 +142,12 @@ class ActualGame(Screen):
         # Append the suffix for the background and the foreground respectively.
         self.b_map.draw_map(self.str_level + "b.txt")
         self.f_map.draw_map(self.str_level + "m.txt")
-        
         # If the level name contains the string 'bonus' then load the
         # bonus music, otherwise don't.
         if "bonus" in self.str_level:
             self.soundplayer.next()
         elif not ("bonus" in self.str_level):
             self.soundplayer.next()
-            
-    def get_sprites_from_map(self):
-        #btlc stands for brick, torch, brickl, coin
-        list_of_btlc = self.f_map.list_set_sprites(self.str_level + "m.txt")
-        
-        for item in list_of_btlc:
-                
-                if item == self.coin_sprite:
-                        pass
-        
 
     def start(self):
         self.actual_keys = pyglet.window.key
@@ -170,7 +167,14 @@ class ActualGame(Screen):
         self.soundplayer.next()
         self.soundplayer.next()
 
-
+    def get_sprites_from_map(self):
+        #btlc stands for brick, torch, brickl, coin
+        list_of_btlc = self.f_map.list_set_sprites(self.str_level + "m.txt")
+        
+        for item in list_of_btlc:
+                
+                if item == self.coin_sprite:
+                        pass
         
 # This is the Main Menu screen which is loaded on game start.
 # It includes all the methods necessary for the movement of
@@ -248,11 +252,6 @@ class MainMenu(Screen):
         pyglet.clock.schedule_interval(self.counter, 1/120.0)
         pyglet.clock.schedule_interval(self.move_clouds, 1/120.0)
         
-        # Load the player to play some music!
-        self.player = pyglet.media.Player()
-        #self.music = pyglet.resource.media("rumba.mp3")
-        #self.player.queue(self.music)
-        #self.player.play()
         self.stop_playing = False
         
         self.in_upper = False
@@ -291,6 +290,13 @@ class MainMenu(Screen):
         self.main_menu_keys = pyglet.window.key
         self.mouse = pyglet.window.mouse
         self.hand = self.game.window.get_system_mouse_cursor('hand')
+        self.soundplayer = pyglet.media.ManagedSoundPlayer() # Load the sound player
+        self.soundplayer.push_handlers(on_eos=self.on_eos)
+        self.source = pyglet.media.StreamingSource() # Load the streaming device source
+        self.audio_path = "res/music/rumba.mp3" # First queue the bonus music
+        self.load_media = pyglet.media.load(self.audio_path)
+        self.soundplayer.queue(self.load_media)
+        self.soundplayer.play()
         self.i = 0
 
     def handle_new_game(self):
@@ -303,7 +309,7 @@ class MainMenu(Screen):
     def on_mouse_press(self, x, y, button, modifiers):
         if button == self.mouse.LEFT:
             if self.is_on_start:
-                self.player.pause()
+                self.soundplayer.pause()
                 self.game.start_playing()
             
     def on_mouse_motion(self, x, y, dx, dy):
@@ -375,6 +381,9 @@ class MainMenu(Screen):
     def on_draw(self):
         self.game.window.clear()
         self.batch.draw()
+        
+    def on_eos(self):
+        self.soundplayer.play()
         
 # The video class. Plays a video.
 class Video(Screen):

@@ -86,8 +86,6 @@ def collide(lhs, rhs, offset2=[-1, -2]):
         d1, d2 = get_image(lhs), get_image(rhs)
         
         # and cast it to something we can operate on (it starts as a string)
-        p1 = cast(d1[0], POINTER(c_ubyte))
-        p2 = cast(d2[0], POINTER(c_ubyte))
         
         # for each overlapping pixel, check for a collision
         for i in range(0, ri.width):

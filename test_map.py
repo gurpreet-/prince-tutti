@@ -1,7 +1,7 @@
 import pyglet
 from random import randint
 from math import floor
-from ctypes import *
+from ctypes import POINTER, c_ubyte, cast
 
 ## Important defines.
 WINDOW_SIZE_X = 1300

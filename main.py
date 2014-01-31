@@ -1,7 +1,7 @@
 import pyglet
 
 #import interface, load, map, player, screen, collision
-import load, screen, collision
+import load, screen
 
 WINDOW_SIZE_X = 1300
 WINDOW_SIZE_Y = 1000
