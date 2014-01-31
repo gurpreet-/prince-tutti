@@ -1,10 +1,13 @@
 import pyglet
-import menu
-import load, player, main2, interface, map
+
+WINDOW_SIZE_X = 1300
+WINDOW_SIZE_Y = 1000
+
 # Use the interface class to manage the GUI elements
 # on-screen. I have done it like this so that individual
 # elements can be removed if necessary. 
 class Interface:
+    '''This class controls the GUI of the game.'''
     def __init__(self, group_images, group_text, batch):
         self.batch = batch
         self.group_images = group_images
@@ -15,24 +18,34 @@ class Interface:
 
         self.logo_image = pyglet.image.load("res/images/logo.png")
         self.logo = pyglet.sprite.Sprite(img=self.logo_image, x=self.spacing,
-                                     y=menu.WINDOW_SIZE_Y/1.17, batch=self.batch,
+                                     y=WINDOW_SIZE_Y/1.17, batch=self.batch,
                                      group=self.group_images)
             
         self.score_image = pyglet.image.load("res/images/score_scroll.png")
         self.score_scroll = pyglet.sprite.Sprite(img=self.score_image, x=self.logo.width + self.spacing,
-                                             y=menu.WINDOW_SIZE_Y/1.17, batch=self.batch,
+                                             y=WINDOW_SIZE_Y/1.17, batch=self.batch,
                                              group=self.group_images)
-            
+        
+        # Gets the position where the lives, bonus, score container will start.
+        # This is necessary because we may scale (or move) the scroll behind it at some point.
+        # If we scale the scroll, then we lose the positioning.
+        # The following code aims to stop the positioning of the messing up.
+        # This code will position everything correctly even if you move the scroll.
+        
+        # First of all we need to find where the lives container will start.
+        # And where it will end.
         self.livescontainer_start = self.score_scroll.x + self.scroll_handle_width
         self.livescontainer_end = self.livescontainer_start + self.score_scroll.width/4
     
-
+        # The ending of the lives container is the start of the bonus container.
         self.bonuscontainer_start = self.livescontainer_end
         self.bonuscontainer_end = self.bonuscontainer_start + self.score_scroll.width/4
     
+        # The ending of the bonus container is the start of the score container.
         self.scorecontainer_start = self.bonuscontainer_end
         self.scorecontainer_end = self.scorecontainer_start - self.scroll_handle_width + self.score_scroll.width/2
         
+        # Initialise all the classes that control the GUI.
         self.score = Score(self.group_text, self.batch, self.scorecontainer_start,
                            self.score_scroll.y,
                            self.scorecontainer_end - self.scorecontainer_start,
@@ -48,9 +61,11 @@ class Interface:
                            self.bonuscontainer_end - self.bonuscontainer_start,
                            self.score_scroll.height/1.5)
         
+    # Call this whenever you need to update the score.
     def update_score_value(self):
         self.score.update_score()
-        
+    
+    # Call this to return the score value.
     def get_score_value(self):
         self.score.return_score()
 
@@ -171,4 +186,3 @@ class Bonus(Interface):
     def update_bonus(self):
         self.bonus_num = str(self.bonus_num)
         self.document.insert_text(len(self.document.text), self.bonus_num)
-  
