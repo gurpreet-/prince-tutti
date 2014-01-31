@@ -1,12 +1,18 @@
 import pyglet
 
+WINDOW_SIZE_X = 1300
+WINDOW_SIZE_Y = 1000
 
 # Load the resources from the following folders,
 # then re-index the file resource locations.
 def load_resources():
-    pyglet.resource.path = ["res", "res/images",
-                            "res/videos", "res/fonts",
-                            "res/music", "res/maps"]
+    pyglet.resource.path = ["res",
+                            "res/images",
+                            "res/videos",
+                            "res/fonts",
+                            "res/music",
+                            "res/maps"]
+    
     pyglet.resource.reindex()
 
 # Set the anchor points to the center of the image.
