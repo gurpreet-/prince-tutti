@@ -8,9 +8,8 @@ WINDOW_SIZE_X = 1300
 WINDOW_SIZE_Y = 1000
 MUMMY_SPEED = 2
 MUMMY_DASH = 3
-PLAYER_SPEED = 2.15
+PLAYER_SPEED = 2.10
 ##
-
 
 class Rect:
     '''Fast rectangular collision structure'''
@@ -48,34 +47,34 @@ class Rect:
         i = (s._texture if not s._animation else s._animation.frames[s._frame_index].image)
         x = int(s.x - i.anchor_x)
         y = int(s.y - i.anchor_y)
-        return Rect(x, y, x + s.width, y + s.height)
-    
-    def get_image(self):
-        '''Returns the (potentially cached) image data for the sprite'''
-        image_data_cache = {}
-        # if this is an animated sprite, grab the current frame
-        if self.s._animation:
-            i = self.s._animation.frames[self.s._frame_index].image
-        # otherwise just grab the image
-        else:
-            i = self.s._texture
-        
-        # if the image is already cached, use the cached copy
-        if i in image_data_cache:
-            d = image_data_cache[i]
-        # otherwise grab the image's alpha channel, and cache it
-        else:
-            d = i.get_image_data().get_data('A', i.width)
-            image_data_cache[i] = d
-        
-        # return a tuple containing the image data, along with the width and height
-        return d, i.width, i.height
+        return Rect(x, y, x + s.width+2, y + s.height+2)
     
 def get_rect(sprite):
     '''Returns the bounding rectangle for the sprite'''
     return Rect.from_sprite(sprite)
+
+def get_image(sprite):
+    '''Returns the (potentially cached) image data for the sprite'''
+    image_data_cache = {}
+    # if this is an animated sprite, grab the current frame
+    if sprite._animation:
+        i = sprite._animation.frames[sprite._frame_index].image
+    # otherwise just grab the image
+    else:
+        i = sprite._texture
+    
+    # if the image is already cached, use the cached copy
+    if i in image_data_cache:
+        d = image_data_cache[i]
+    # otherwise grab the image's alpha channel, and cache it
+    else:
+        d = i.get_image_data().get_data('A', i.width)
+        image_data_cache[i] = d
+    
+    # return a tuple containing the image data, along with the width and height
+    return d, i.width, i.height
  
-def collide(lhs, rhs, offset2 = None):
+def collide(lhs, rhs, offset2=None):
     '''Checks for collision between two sprites'''
     
     # first check if the bounds overlap, no need to go further if they don't
@@ -95,7 +94,7 @@ def collide(lhs, rhs, offset2 = None):
         offx2, offy2 = int(ri.x1 - r2.x1), int(ri.y1 - r2.y1)
         
         # grab the image data
-        d1, d2 = lhs.get_image(), rhs.get_image()
+        d1, d2 = get_image(lhs), get_image(rhs)
         
         # and cast it to something we can operate on (it starts as a string)
         p1 = cast(d1[0], POINTER(c_ubyte))
@@ -110,7 +109,6 @@ def collide(lhs, rhs, offset2 = None):
                 # if both pixels are non-empty, we have a collision
                 if c1 > 0 and c2 > 0:
                     return True
-    
     # no collision found
     return False
 
@@ -151,6 +149,7 @@ def get_area(img, x, y):
 def get_sarea(img, x, y):
         if img.x < x < img.x + img.width and img.y < y < img.y + img.height:
             return True
+        return False
 
 # Draws a rectangle using the in-built commands of
 # OpenGL.
@@ -173,8 +172,18 @@ class Player(pyglet.sprite.Sprite):
                                               x=self.x_pos, y=self.y_pos,
                                               batch=batch, group=group)
         self.speed = PLAYER_SPEED
+        self.allowed_down = True
+        self.allowed_up = True
+        self.allowed_left = True
+        self.allowed_right = True
         self.reset_bools()
         self.going_nowhere = True
+        
+    def allow_bools(self):
+        self.allowed_down = True
+        self.allowed_up = True
+        self.allowed_left = True
+        self.allowed_right = True
         
     def reset_bools(self):
         self.going_left = False
@@ -189,7 +198,31 @@ class Player(pyglet.sprite.Sprite):
     
     def reset_speed(self):
         self.speed = PLAYER_SPEED
-    
+        
+    def no_down(self):
+        self.allowed_down = False
+
+    def no_left(self):
+        self.allowed_left = False
+
+    def no_right(self):
+        self.allowed_right = False
+
+    def no_up(self):
+        self.allowed_up = False
+        
+    def yes_down(self):
+        self.allowed_down = True
+
+    def yes_left(self):
+        self.allowed_left = True
+
+    def yes_right(self):
+        self.allowed_right = True
+
+    def yes_up(self):
+        self.allowed_up = True
+            
     def get_speed(self):
         return self.speed
     
@@ -208,7 +241,7 @@ class Player(pyglet.sprite.Sprite):
             pyglet.clock.unschedule(self.move_player_up)
             self.reset_bools()
             self.going_nowhere = True
-            
+        
         elif not self.going_down or self.going_nowhere:
             pyglet.clock.schedule_interval(self.move_player_down, 1/120.0)
             self.reset_bools() # Reset the bools...
@@ -263,16 +296,24 @@ class Player(pyglet.sprite.Sprite):
         self.the_player.y = 0
         
     def move_player_down(self, dt):
-        self.the_player.y -= self.speed
+        if self.allowed_down:
+            #self.going_nowhere = True
+            self.the_player.y -= self.speed
             
     def move_player_up(self, dt):
-        self.the_player.y += self.speed
+        if self.allowed_up:
+            #self.going_nowhere = True
+            self.the_player.y += self.speed
 
     def move_player_left(self, dt):
-        self.the_player.x -= self.speed
+        if self.allowed_left:
+            #self.going_nowhere = True
+            self.the_player.x -= self.speed
             
     def move_player_right(self, dt):
-        self.the_player.x += self.speed
+        if self.allowed_right:
+            #self.going_nowhere = True
+            self.the_player.x += self.speed
         
     def player_stop(self):
         self.speed = 0
@@ -428,15 +469,39 @@ class ActualGame(Screen):
         self.soundplayer.queue(self.load_media)
         self.soundplayer.queue(pyglet.media.load("res/music/main.mp3")) # Then the main music
         self.soundplayer.play()
-        
-        
-        
+
         # Create the actual player who plays in the game
-        self.player = Player(65, 500, self.tile_batch, self.fg_group)
-        
+        self.player = Player(68, 480, self.tile_batch, self.fg_group)
+        self.o_x = 0
+        self.o_y = 0
         # Useful for collision detection
-        pyglet.clock.schedule_interval(self.detect, 1/30.0)
-        pyglet.clock.schedule_interval(self.collision, 1/60.0)
+        pyglet.clock.schedule_interval(self.gen_rects, 1/4.0)
+        pyglet.clock.schedule_interval(self.detect, 1/2.0)
+        pyglet.clock.schedule_interval(self.collision, 1/4.0)
+#         pyglet.clock.schedule_interval(self.timer, 1/2.0)
+        self.rectl = 0
+        self.rectr = 0
+        self.rectu = 0
+        self.rectd = 0
+        self.collided = False
+        
+    def gen_rects(self, dt):
+        self.rectl = Rect(self.player.the_player.x-5, 
+                          self.player.the_player.y+5, 
+                          self.player.the_player.x+4, 
+                          self.player.the_player.y+10)
+        self.rectr = Rect(self.player.the_player.x-2, 
+                          self.player.the_player.y+1, 
+                          self.player.the_player.x+1, 
+                          self.player.the_player.y+5)
+        self.rectu = Rect(self.player.the_player.x+2, 
+                          self.player.the_player.y+10, 
+                          self.player.the_player.x+15, 
+                          self.player.the_player.y+40)
+        self.rectd = Rect(self.player.the_player.x, 
+                            self.player.the_player.y-20, 
+                            self.player.the_player.x+1, 
+                            self.player.the_player.y-10)
         
     def detect(self, dt):
         # Check where the player is
@@ -447,13 +512,32 @@ class ActualGame(Screen):
             print("out of bounds")
             
     def collision(self, dt):
-        self.player_rect = Rect(self.player.the_player.x, self.player.the_player.y, 
-                                self.player.the_player.x + self.player.the_player.width, 
-                                self.player.the_player.y + self.player.the_player.height)
+        self.player.allow_bools()
         for rectangles in self.f_map.return_sprites():
-            if collide(rectangles, self.player.the_player):
-                print("collision..")
-            
+            if get_rect(rectangles).collides(self.rectl):
+                self.player.no_left()
+ 
+            if get_rect(rectangles).collides(self.rectr):
+                self.player.no_right()
+             
+            if get_rect(rectangles).collides(self.rectu):
+                self.player.no_up()
+             
+            if get_rect(rectangles).collides(self.rectd):
+                self.player.no_down()
+                
+    def collision2(self, dt):
+        for rectangles in self.f_map.return_sprites():
+            if get_rect(rectangles).collides(get_rect(self.player.the_player)):
+                self.collided = True
+                self.player.the_player.x = self.o_x
+                self.player.the_player.y = self.o_y
+        self.collided = False
+                
+    def timer(self, dt):
+        if not self.collided:
+            self.o_x = self.player.the_player.x
+            self.o_y = self.player.the_player.y
 
     def on_key_press(self, key, modifiers):
         if key == self.actual_keys.DOWN:
@@ -621,8 +705,7 @@ class Maps:
                                           sprite.x + sprite.width, 
                                           sprite.y + sprite.height))
         return set(self.rect_array)
-            
-
+    
 # Use the interface class to manage the GUI elements
 # on-screen. I have done it like this so that individual
 # elements can be removed if necessary. 
