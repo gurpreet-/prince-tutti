@@ -88,7 +88,7 @@ class Player(pyglet.sprite.Sprite):
             self.going_nowhere = True
         
         elif not self.going_down or self.going_nowhere:
-            pyglet.clock.schedule_interval(self.move_player_down, 1/120.0)
+            pyglet.clock.schedule_interval(self.move_player_down, 1/60.0)
             self.reset_bools() # Reset the bools...
             self.going_down = True # Then set the going down variable to true.
         
@@ -102,7 +102,7 @@ class Player(pyglet.sprite.Sprite):
             self.reset_bools()
             self.going_nowhere = True
         elif not self.going_up or self.going_nowhere:
-            pyglet.clock.schedule_interval(self.move_player_up, 1/120.0)
+            pyglet.clock.schedule_interval(self.move_player_up, 1/60.0)
             self.reset_bools()
             self.going_up = True
     
@@ -116,7 +116,7 @@ class Player(pyglet.sprite.Sprite):
             self.reset_bools()
             self.going_nowhere = True
         elif not self.going_left or self.going_nowhere:
-            pyglet.clock.schedule_interval(self.move_player_left, 1/120.0)
+            pyglet.clock.schedule_interval(self.move_player_left, 1/60.0)
             self.reset_bools()
             self.going_left = True
         
@@ -130,7 +130,7 @@ class Player(pyglet.sprite.Sprite):
             self.reset_bools()
             self.going_nowhere = True
         elif not self.going_right or self.going_nowhere:
-            pyglet.clock.schedule_interval(self.move_player_right, 1/120.0)
+            pyglet.clock.schedule_interval(self.move_player_right, 1/60.0)
             self.reset_bools()
             self.going_right = True
 

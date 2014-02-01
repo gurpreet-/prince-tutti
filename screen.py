@@ -96,7 +96,7 @@ class ActualGame(Screen):
         self.rectr = 0
         self.rectu = 0
         self.rectd = 0
-        self.circle = pyglet.resource.image("spot4.png")
+        self.circle = pyglet.resource.image("spot1.png")
         self.volume_num = 1
         self.unlock()
         
