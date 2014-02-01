@@ -1,4 +1,5 @@
 import pyglet
+from pyglet.gl import *
 import load, interface, map, player
 from collision import get_rect, get_area, Rect
 from random import randint
@@ -34,6 +35,7 @@ class Screen:
 
     def on_draw(self):
         pass
+
     
 # This class represents the Actual Game. The GUI,
 # the maps are all initialised here.
@@ -53,7 +55,7 @@ class ActualGame(Screen):
         self.bg_group = pyglet.graphics.OrderedGroup(0)
         
         # Create the graphical user interface
-        self.interface = interface.Interface(self.fg_group, self.text_group, self.interface_batch)
+        self.interface = interface.Interface(self.game, self.fg_group, self.text_group, self.interface_batch)
         self.wood_image = pyglet.image.load("res/images/woodenplank.png")
         self.plank = pyglet.sprite.Sprite(img=self.wood_image, x=0,
                                      y=WINDOW_SIZE_Y/1.17, batch=self.interface_batch,
@@ -62,11 +64,15 @@ class ActualGame(Screen):
         self.b_map = map.Maps(self.bg_group, self.tile_batch)
         self.f_map = map.Maps(self.bg2_group, self.tile_batch)
         
-        # Create the sound manager
+        # Create the sound effects manager
+        self.effects = pyglet.media.ManagedSoundPlayer() # Load the sound player
+        self.source2 = pyglet.media.StreamingSource() # Load the streaming device source
+        
+        # Create the music manager
         self.soundplayer = pyglet.media.ManagedSoundPlayer() # Load the sound player
         self.soundplayer.push_handlers(on_eos=self.on_eos)
         self.source = pyglet.media.StreamingSource() # Load the streaming device source
-        self.audio_path = "res/music/bonus.mp3" # First queue the bonus music
+        self.audio_path = "res/music/scare.mp3" # First queue the bonus music
         self.load_media = pyglet.media.load(self.audio_path)
         self.on_to_next = False
         self.soundplayer.queue(self.load_media)
@@ -76,17 +82,26 @@ class ActualGame(Screen):
         # Create the actual player who plays in the game
         self.player = player.Player(68, 480, self.tile_batch, self.fg_group)
         # Useful for collision detection
+        self.lights = []
+        self.time = 0
         pyglet.clock.schedule_interval(self.gen_rects, 1/15.0)
         pyglet.clock.schedule_interval(self.detect, 1/2.0)
         pyglet.clock.schedule_interval(self.collision, 1/15.0)
-#         pyglet.clock.schedule_interval(self.timer, 1/2.0)
+        pyglet.clock.schedule_interval(self.collision_coins, 1/15.0)
+        pyglet.clock.schedule_interval(self.collision_key, 1/15.0)
+        pyglet.clock.schedule_interval(self.update_score, 2.0)
+        pyglet.clock.schedule_once(self.make_light, 2.0)
+
         self.rectl = 0
         self.rectr = 0
         self.rectu = 0
         self.rectd = 0
+        self.circle = pyglet.resource.image("spot4.png")
+        self.volume_num = 1
+        self.unlock()
         
     def gen_rects(self, dt):
-        self.rectl = Rect(self.player.the_player.x-9, 
+        self.rectl = Rect(self.player.the_player.x-7, 
                           self.player.the_player.y-3, 
                           self.player.the_player.x+10, 
                           self.player.the_player.y+5)
@@ -98,10 +113,19 @@ class ActualGame(Screen):
                           self.player.the_player.y+10, 
                           self.player.the_player.x+15, 
                           self.player.the_player.y+28)
-        self.rectd = Rect(self.player.the_player.x-2, 
-                            self.player.the_player.y-15, 
-                            self.player.the_player.x+4, 
-                            self.player.the_player.y-10)
+        self.rectd = Rect(self.player.the_player.x-3, 
+                          self.player.the_player.y-11, 
+                          self.player.the_player.x+3, 
+                          self.player.the_player.y-8)
+        
+    def make_light(self, dt):
+        for torch in self.f_map.return_torches():
+            self.torch_sprite = pyglet.sprite.Sprite(self.circle, x=torch.x-10,
+                                                       y=torch.y-10, batch=self.interface_batch,
+                                                       group=self.fg_group)
+            self.torch_sprite.opacity = randint(50, 120)
+            self.lights.append(self.torch_sprite)
+        return set(self.lights)
         
     def detect(self, dt):
         # Check where the player is
@@ -110,6 +134,15 @@ class ActualGame(Screen):
             self.player.the_player.y > WINDOW_SIZE_Y or
             self.player.the_player.y < 0):
             print("out of bounds")
+        self.time += 1
+        if self.time >= 100:
+            self.time = 0
+        for sprite in self.lights:
+            if self.time >= 50 and sprite.opacity < 120:
+                sprite.opacity += 1
+            if self.time < 50 and sprite.opacity > 20:
+                sprite.opacity -= 1
+                
             
     def collision(self, dt):
         self.player.allow_bools()
@@ -125,6 +158,67 @@ class ActualGame(Screen):
              
             if get_rect(rectangles).collides(self.rectd):
                 self.player.no_down()
+
+    def collision_coins(self, dt):
+        for coin in self.f_map.return_coins():
+            if get_rect(coin).collides(get_rect(self.player.the_player)):
+                if coin.visible == True:
+                    self.interface.update_bonus()
+                    coin.visible = False
+                    
+    def collision_key(self, dt):
+        for key in self.f_map.return_keys():
+            if get_rect(key).collides(get_rect(self.player.the_player)):
+                if key.visible == True:
+                    self.interface.update_key_scroll()
+                    pyglet.clock.schedule_once(self.unlock_exit_gate, 0.1)
+                    pyglet.clock.schedule_interval(self.volume_decrease, 1/10)
+                    key.visible = False
+    
+    def volume_decrease(self, dt):
+        if self.volume_num <= 0.2:
+            pyglet.clock.unschedule(self.volume_decrease)
+            self.soundplayer.pause()
+            self.soundplayer.queue(pyglet.resource.media("scare.mp3"))
+            self.soundplayer.next()
+            self.soundplayer.play()
+            self.on_to_next = True
+            pyglet.clock.schedule_interval(self.volume_increase, 1.0)
+        self.soundplayer.volume = self.volume_num
+        self.volume_num -= 0.05
+        
+    def volume_increase(self, dt):
+        if self.volume_num > 1:
+            pyglet.clock.unschedule(self.volume_increase)
+        self.soundplayer.volume = self.volume_num
+        self.volume_num += 0.1
+                    
+    def update_score(self, dt):
+        self.interface.update_score_value()
+        
+    def unlock(self):
+        if self.level == 0:
+            pyglet.clock.schedule_once(self.unlock_key_gate, 10.0)
+        if self.level == 1:
+            pyglet.clock.schedule_once(self.unlock_key_gate, 32.0)
+        
+    def unlock_key_gate(self, dt):
+        for obj in self.f_map.return_keygate():
+            for i in range(10, 0, -1):
+                obj.scale = i/10
+                obj.y += i/2
+            self.load_effect = pyglet.resource.media("chain_gate.mp3")
+            self.effects.queue(self.load_effect)
+            self.effects.play()
+            
+    def unlock_exit_gate(self, dt):
+        for obj in self.f_map.return_exitgate():
+            for i in range(10, 0, -1):
+                obj.scale = i/10
+                obj.y += i/2
+            self.load_effect = pyglet.resource.media("chain_gate.mp3")
+            self.effects.queue(self.load_effect)
+            self.effects.play()
 
     def on_key_press(self, key, modifiers):
         if key == self.actual_keys.DOWN:
@@ -164,17 +258,15 @@ class ActualGame(Screen):
     
     # This method is called whenever the player reaches end of source.
     def on_eos(self):
-        self.soundplayer.next()
-        self.soundplayer.next()
-
-    def get_sprites_from_map(self):
-        #btlc stands for brick, torch, brickl, coin
-        list_of_btlc = self.f_map.list_set_sprites(self.str_level + "m.txt")
-        
-        for item in list_of_btlc:
-                
-                if item == self.coin_sprite:
-                        pass
+        self.soundplayer.pause()
+        if not self.on_to_next:
+            self.soundplayer.queue(pyglet.media.load("res/music/main.mp3"))
+            self.soundplayer.next()
+            self.soundplayer.play()
+        if self.on_to_next:
+            self.soundplayer.queue(pyglet.media.load("res/music/scare.mp3"))
+            self.soundplayer.next()
+            self.soundplayer.play()
         
 # This is the Main Menu screen which is loaded on game start.
 # It includes all the methods necessary for the movement of

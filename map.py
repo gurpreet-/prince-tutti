@@ -1,5 +1,6 @@
 import pyglet
 
+
 WINDOW_SIZE_X = 1300
 WINDOW_SIZE_Y = 1000
 
@@ -16,6 +17,11 @@ class Maps:
         self.tile_y = WINDOW_SIZE_Y-32
         self.sprites = []
         self.objects = []
+        self.coins = []
+        self.kgate = []
+        self.egate = []
+        self.keys = []
+        self.torches = []
         
         # Load all the necessary images for the maps.
         self.sand_load = pyglet.image.load("res/images/sand.jpg")
@@ -125,6 +131,7 @@ class Maps:
                                                        y=self.tile_y, batch=self.batch,
                                                        group=self.group)
                     self.sprites.append(self.exit_sprite) # See above
+                    self.egate.append(self.exit_sprite)
 
                 elif letter == "u":
                     self.bricksand_sprite = pyglet.sprite.Sprite(self.brick_sand, x=self.tile_x,
@@ -142,25 +149,26 @@ class Maps:
                     self.key_sprite = pyglet.sprite.Sprite(self.key, x=self.tile_x,
                                                        y=self.tile_y, batch=self.batch,
                                                        group=self.group)
-                    self.objects.append(self.key_sprite) # See above
+                    self.keys.append(self.key_sprite) # See above
 
                 elif letter == "c":
                     self.coin_sprite = pyglet.sprite.Sprite(self.coin, x=self.tile_x,
                                                        y=self.tile_y, batch=self.batch,
                                                        group=self.group)
-                    self.objects.append(self.coin_sprite) # See above
+                    self.coins.append(self.coin_sprite) # See above
                     
                 elif letter == "t":
                     self.torch_sprite = pyglet.sprite.Sprite(self.torch, x=self.tile_x,
                                                        y=self.tile_y, batch=self.batch,
                                                        group=self.group)
-                    self.objects.append(self.torch_sprite) # See above
+                    self.torches.append(self.torch_sprite) # See above
                     
                 elif letter == "g":
                     self.gate_sprite = pyglet.sprite.Sprite(self.gate, x=self.tile_x,
                                                        y=self.tile_y, batch=self.batch,
                                                        group=self.group)
-                    self.sprites.append(self.gate_sprite) # See above
+                    self.kgate.append(self.gate_sprite) # See above
+                    self.sprites.append(self.gate_sprite)
                  
                 elif letter == "[":
                     self.tile_x = 0
@@ -179,6 +187,21 @@ class Maps:
     
     def return_objects(self):
         return set(self.objects)
+    
+    def return_keys(self):
+        return self.keys
+    
+    def return_torches(self):
+        return set(self.torches)
+    
+    def return_keygate(self):
+        return set(self.kgate)
+    
+    def return_exitgate(self):
+        return set(self.egate)
+        
+    def return_coins(self):
+        return set(self.coins)
 
 #     def return_srectangles(self):
 #         self.rect_array = []

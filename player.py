@@ -14,6 +14,8 @@ class Player(pyglet.sprite.Sprite):
         self.the_player = pyglet.sprite.Sprite(img=self.player_image,
                                               x=self.x_pos, y=self.y_pos,
                                               batch=batch, group=group)
+                                             
+                                              
         self.speed = PLAYER_SPEED
         self.allowed_down = True
         self.allowed_up = True
