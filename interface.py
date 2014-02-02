@@ -117,6 +117,10 @@ class Interface:
     def get_score_value(self):
         self.score.return_score()
         
+    # Call this to return the lives value
+    def get_lives_value(self):
+        self.lives.return_lives()
+        
 
 # Updates the score.
 class Score(Interface):
