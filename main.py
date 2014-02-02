@@ -88,5 +88,4 @@ load.load_resources() # First of all load the resources.
 if __name__ == '__main__': # Run the game!!
     game = Game() # Load game class
     game.execute() # Then execute it
-    a = screen.ActualGame(game, 0)
     #a.get_sprites_from_map()

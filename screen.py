@@ -118,6 +118,7 @@ class ActualGame(Screen):
         
         self.circle = pyglet.resource.image("spot1.png")
         self.volume_num = 1
+        self.new_level = False
         self.unlock()
     
     # 0 = right
@@ -151,7 +152,10 @@ class ActualGame(Screen):
             self.player.the_player.x < 0 or 
             self.player.the_player.y > WINDOW_SIZE_Y or
             self.player.the_player.y < 0):
-            print("out of bounds")
+            if not self.new_level:
+                self.game.goto_next_level()
+                self.soundplayer.pause()
+                self.new_level = True
         self.time += 1
         if self.time >= 100:
             self.time = 0
@@ -216,7 +220,7 @@ class ActualGame(Screen):
         
     def unlock(self):
         if self.level == 0:
-            pyglet.clock.schedule_once(self.unlock_key_gate, 10.0)
+            pyglet.clock.schedule_once(self.unlock_key_gate, 20.0)
         if self.level == 1:
             pyglet.clock.schedule_once(self.unlock_key_gate, 32.0)
         
@@ -224,7 +228,7 @@ class ActualGame(Screen):
         for obj in self.f_map.return_keygate():
             for i in range(10, 0, -1):
                 obj.scale = i/10
-                obj.y += i/2
+                obj.y += i/1.5
             self.load_effect = pyglet.resource.media("chain_gate.mp3")
             self.effects.queue(self.load_effect)
             self.effects.play()
