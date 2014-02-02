@@ -232,7 +232,7 @@ class Mummy(Player):
         self.y_pos = y
 
                 
-        self.mummy_image = pyglet.image.load("res/images/mummy1.png")
+        self.mummy_image = pyglet.image.load("res/images/mummy.png")
                 
                 
         self.the_mummy = pyglet.sprite.Sprite(img=self.mummy_image,
@@ -252,9 +252,9 @@ class Mummy(Player):
     #Override method from paren class
 
 
-    def distance(point_1=(0, 0), point_2=(0, 0)): 
-       """Returns the distance between player and a mummy""" 
-       return math.sqrt( 
-                (point_1[0] - point_2[0]) ** 2 + 
-                (point_1[1] - point_2[1]) ** 2)    
+#     def distance(point_1=(0, 0), point_2=(0, 0)): 
+#        """Returns the distance between player and a mummy""" 
+#        return math.sqrt( 
+#                 (point_1[0] - point_2[0]) ** 2 + 
+#                 (point_1[1] - point_2[1]) ** 2)    
     

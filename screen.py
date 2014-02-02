@@ -80,9 +80,10 @@ class ActualGame(Screen):
         self.soundplayer.play()
 
         # Create the actual player who plays in the game
-        self.player = player.Player(68, 480, self.tile_batch, self.fg_group, img = pyglet.image.load('res/images/indy/man.png')) 
+        self.indy = pyglet.image.load('res/images/indy/man.png')
+        self.player = player.Player(68, 480, self.tile_batch, self.fg_group, self.indy)
         # Creates an AI mummy
-        self.mummy = player.Mummy(200, 620, self.tile_batch, self.fg_group, img = pyglet.image.load("res/images/mummy1.png"))
+        self.mummy = player.Mummy(200, 620, self.tile_batch, self.fg_group, img = pyglet.image.load("res/images/mummy.png"))
         
         # Useful for collision detection
         self.lights = []
@@ -90,55 +91,42 @@ class ActualGame(Screen):
         
         self.time = 0
         pyglet.clock.schedule_interval(self.gen_rects, 1/60.0)
-        pyglet.clock.schedule_interval(self.gen_rects2, 1/60.0)
         pyglet.clock.schedule_interval(self.detect, 1/2.0)
         pyglet.clock.schedule_interval(self.collision, 1/60.0)
         pyglet.clock.schedule_interval(self.collision_coins, 1/15.0)
         pyglet.clock.schedule_interval(self.collision_key, 1/15.0)
         pyglet.clock.schedule_interval(self.update_score, 2.0)
         pyglet.clock.schedule_once(self.make_light, 2.0)
-        self.invisible_box = pyglet.image.load("res/images/collision.png")
-        self.invisible_box2 = pyglet.image.load("res/images/collision2.png")
-        self.invis1 = pyglet.sprite.Sprite(img=self.invisible_box, x=self.player.the_player.x + 
-                                           self.player.the_player.width,
-                                     y=self.player.the_player.y, batch=self.interface_batch,
-                                     group=self.bg2_group)
-        self.invis2 = pyglet.sprite.Sprite(img=self.invisible_box, x=self.player.the_player.x,
-                                     y=self.player.the_player.y, batch=self.interface_batch,
-                                     group=self.bg2_group)
-        self.invis3 = pyglet.sprite.Sprite(img=self.invisible_box2, x=self.player.the_player.x,
-                                     y=self.player.the_player.y + self.player.the_player.height, 
-                                     batch=self.interface_batch,
-                                     group=self.bg2_group)
-        self.invis4 = pyglet.sprite.Sprite(img=self.invisible_box2, x=self.player.the_player.x,
-                                     y=self.player.the_player.y, 
-                                     batch=self.interface_batch,
-                                     group=self.bg2_group)
-        self.rectang.append(self.invis1)
-        self.rectang.append(self.invis2)
-        self.rectang.append(self.invis3)
-        self.rectang.append(self.invis4)
-        
+
+        self.rectl = 0
+        self.rectr = 0
+        self.rectu = 0
+        self.rectd = 0
         self.circle = pyglet.resource.image("spot1.png")
         self.volume_num = 1
-        self.new_level = False
         self.unlock()
-    
-    # 0 = right
-    # 1 = left
-    # 2 = top
-    # 3 = bottom
-    def gen_rects(self, dt):
-        self.rectang[0].x = self.player.the_player.x + self.player.the_player.width + 5
-        self.rectang[0].y = self.player.the_player.y
-        self.rectang[1].x = self.player.the_player.x - 5
-        self.rectang[1].y = self.player.the_player.y - 2
         
-    def gen_rects2(self, dt):
-        self.rectang[2].x = self.player.the_player.x + 1
-        self.rectang[2].y = self.player.the_player.y + self.player.the_player.height + 5
-        self.rectang[3].x = self.player.the_player.x
-        self.rectang[3].y = self.player.the_player.y - 5
+    def gen_rects(self, dt):
+        self.center_y1 = self.player.the_player.height/2 - 1
+        self.center_y2 = self.player.the_player.height/2 + 1
+        self.rectl = Rect(self.player.the_player.x - 6, 
+                          self.player.the_player.y + self.center_y1, 
+                          self.player.the_player.x + 4, 
+                          self.player.the_player.y + self.center_y2)
+        self.rectr = Rect(self.player.the_player.x + self.player.the_player.width + 6, 
+                          self.player.the_player.y + self.center_y1, 
+                          self.player.the_player.x + self.player.the_player.width + 4, 
+                          self.player.the_player.y + self.center_y2)
+        self.center_x1 =self.player.the_player.width/2 - 1
+        self.center_x2 =self.player.the_player.width/2 + 1
+        self.rectu = Rect(self.player.the_player.x + self.center_x1, 
+                          self.player.the_player.y + self.player.the_player.height + 1, 
+                          self.player.the_player.x + self.center_x2, 
+                          self.player.the_player.y + self.player.the_player.height + 5)
+        self.rectd = Rect(self.player.the_player.x + self.center_x1, 
+                          self.player.the_player.y - 1, 
+                          self.player.the_player.x + self.center_x2, 
+                          self.player.the_player.y + 5)
         
     def make_light(self, dt):
         for torch in self.f_map.return_torches():
@@ -155,10 +143,7 @@ class ActualGame(Screen):
             self.player.the_player.x < 0 or 
             self.player.the_player.y > WINDOW_SIZE_Y or
             self.player.the_player.y < 0):
-            if not self.new_level:
-                self.game.goto_next_level()
-                self.soundplayer.pause()
-                self.new_level = True
+            print("out of bounds")
         self.time += 1
         if self.time >= 100:
             self.time = 0
@@ -172,16 +157,16 @@ class ActualGame(Screen):
     def collision(self, dt):
         self.player.allow_bools()
         for rectangles in self.f_map.return_sprites():
-            if get_sarea(rectangles, self.rectang[0].x, self.rectang[0].y):
-                self.player.no_right()
- 
-            if get_sarea(rectangles, self.rectang[1].x, self.rectang[1].y):
+            if get_rect(rectangles).collides(self.rectl):
                 self.player.no_left()
-              
-            if get_sarea(rectangles, self.rectang[2].x, self.rectang[2].y):
+ 
+            if get_rect(rectangles).collides(self.rectr):
+                self.player.no_right()
+             
+            if get_rect(rectangles).collides(self.rectu):
                 self.player.no_up()
-              
-            if get_sarea(rectangles, self.rectang[3].x, self.rectang[3].y):
+             
+            if get_rect(rectangles).collides(self.rectd):
                 self.player.no_down()
 
     def collision_coins(self, dt):
@@ -223,7 +208,7 @@ class ActualGame(Screen):
         
     def unlock(self):
         if self.level == 0:
-            pyglet.clock.schedule_once(self.unlock_key_gate, 20.0)
+            pyglet.clock.schedule_once(self.unlock_key_gate, 10.0)
         if self.level == 1:
             pyglet.clock.schedule_once(self.unlock_key_gate, 32.0)
         
@@ -231,7 +216,7 @@ class ActualGame(Screen):
         for obj in self.f_map.return_keygate():
             for i in range(10, 0, -1):
                 obj.scale = i/10
-                obj.y += i/1.5
+                obj.y += i/2
             self.load_effect = pyglet.resource.media("chain_gate.mp3")
             self.effects.queue(self.load_effect)
             self.effects.play()
@@ -295,7 +280,7 @@ class ActualGame(Screen):
             self.soundplayer.queue(pyglet.media.load("res/music/scare.mp3"))
             self.soundplayer.next()
             self.soundplayer.play()
-             
+        
 # This is the Main Menu screen which is loaded on game start.
 # It includes all the methods necessary for the movement of
 # elements.
