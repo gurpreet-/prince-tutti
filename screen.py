@@ -288,7 +288,7 @@ class ActualGame(Screen):
             self.soundplayer.queue(pyglet.media.load("res/music/scare.mp3"))
             self.soundplayer.next()
             self.soundplayer.play()
-        
+             
 # This is the Main Menu screen which is loaded on game start.
 # It includes all the methods necessary for the movement of
 # elements.
