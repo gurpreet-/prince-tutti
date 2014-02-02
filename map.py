@@ -63,6 +63,7 @@ class Maps:
             # 7 = 27x1
             # u = brick under sand (bg)
             # ; = stone under sand (bg)
+            # / = gray patterned sand (bg)
             # ? = gray patterned stone (bg)
             # b = brick
             # t = torch
