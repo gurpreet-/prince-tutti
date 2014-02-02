@@ -11,12 +11,38 @@ class Player(pyglet.sprite.Sprite):
         self.x_pos = x
         self.y_pos = y
         
+        self.stand_still = pyglet.image.load("res/images/indy/man.png")
+        
+        self.front1 = pyglet.image.load("res/images/indy/front_left.png")
+        self.front2 = pyglet.image.load("res/images/indy/front_right.png")
+        
+        self.left1 = pyglet.image.load("res/images/indy/left_left.png")
+        self.left2 = pyglet.image.load("res/images/indy/left_right.png")
+        
+        self.up1 = pyglet.image.load("res/images/indy/up_left.png")
+        self.up2 = pyglet.image.load("res/images/indy/up_right.png")
+        
+        self.right1 = pyglet.image.load("res/images/indy/right_right.png")
+        self.right2 = pyglet.image.load("res/images/indy/right_left.png")
+     
+        
+         
+         
+        
+        
+        self.anim_front = pyglet.image.Animation.from_image_sequence([self.front1, self.front2], 0.5, True)  # 0.5 is the number in seconds between frames
+        self.anim_left = pyglet.image.Animation.from_image_sequence([self.left1, self.left2], 0.5, True)    # True means to keep looping (We can always stop it later)
+        self.anim_up = pyglet.image.Animation.from_image_sequence([self.up1, self.up2], 0.5, True)
+        self.anim_right = pyglet.image.Animation.from_image_sequence([self.right1, self.right2], 0.5, True)
+        
+        
+        
         
         self.the_player = pyglet.sprite.Sprite(img=pyglet.image.load("res/images/indy/man.png"),
                                               x=self.x_pos, y=self.y_pos,
-                                              batch=batch, group=group)
-                                             
+                                              batch=batch, group=group)                                     
         self.the_player.scale = 0.25
+
                                               
         self.speed = PLAYER_SPEED
         self.allowed_down = True
@@ -27,19 +53,19 @@ class Player(pyglet.sprite.Sprite):
         self.going_nowhere = True
 
     def down(self):
-        self.the_player.image = pyglet.image.load("res/images/indy/man.png")
+        self.the_player.image = self.anim_front
         return self
 
     def right(self):
-        self.the_player.image = pyglet.image.load('res/images/indy/man_right.png')   
+        self.the_player.image = self.anim_right      
         return self
    
     def left(self):
-        self.the_player.image = pyglet.image.load('res/images/indy/man_left.png')    
+        self.the_player.image = self.anim_left   
         return self
     
     def up(self):
-        self.the_player.image = pyglet.image.load('res/images/indy/man_back.png')    
+        self.the_player.image = self.anim_up    
         return self  
 
         
