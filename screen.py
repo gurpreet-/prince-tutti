@@ -81,6 +81,9 @@ class ActualGame(Screen):
 
         # Create the actual player who plays in the game
         self.player = player.Player(68, 480, self.tile_batch, self.fg_group, img = pyglet.image.load('res/images/indy/man.png')) 
+        # Creates an AI mummy
+        self.mummy = player.Mummy(200, 620, self.tile_batch, self.fg_group, img = pyglet.image.load("res/images/mummy1.png"))
+        
         # Useful for collision detection
         self.lights = []
         self.rectang = []
