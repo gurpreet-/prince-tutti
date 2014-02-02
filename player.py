@@ -51,22 +51,26 @@ class Player(pyglet.sprite.Sprite):
         self.allowed_right = True
         self.reset_bools()
         self.going_nowhere = True
+        self.o_x = self.the_player.x
+        self.o_y = self.the_player.y
+        pyglet.clock.schedule_interval(self.updatepos, 1/60.0)
+        pyglet.clock.schedule_interval(self.is_moving, 1/70.0)
 
-    def down(self):
-        self.the_player.image = self.anim_front
-        return self
-
-    def right(self):
-        self.the_player.image = self.anim_right      
-        return self
-   
-    def left(self):
-        self.the_player.image = self.anim_left   
-        return self
-    
-    def up(self):
-        self.the_player.image = self.anim_up    
-        return self  
+#     def down(self):
+#         self.the_player.image = self.anim_front
+#         return self
+#  
+#     def right(self):
+#         self.the_player.image = self.anim_right      
+#         return self
+#     
+#     def left(self):
+#         self.the_player.image = self.anim_left   
+#         return self
+#      
+#     def up(self):
+#         self.the_player.image = self.anim_up    
+#         return self  
 
         
     def allow_bools(self):
@@ -133,6 +137,7 @@ class Player(pyglet.sprite.Sprite):
             self.going_nowhere = True
         
         elif not self.going_down or self.going_nowhere:
+            self.the_player.image = self.anim_front
             pyglet.clock.schedule_interval(self.move_player_down, 1/60.0)
             self.reset_bools() # Reset the bools...
             self.going_down = True # Then set the going down variable to true.
@@ -147,6 +152,7 @@ class Player(pyglet.sprite.Sprite):
             self.reset_bools()
             self.going_nowhere = True
         elif not self.going_up or self.going_nowhere:
+            self.the_player.image = self.anim_up 
             pyglet.clock.schedule_interval(self.move_player_up, 1/60.0)
             self.reset_bools()
             self.going_up = True
@@ -161,6 +167,7 @@ class Player(pyglet.sprite.Sprite):
             self.reset_bools()
             self.going_nowhere = True
         elif not self.going_left or self.going_nowhere:
+            self.the_player.image = self.anim_left 
             pyglet.clock.schedule_interval(self.move_player_left, 1/60.0)
             self.reset_bools()
             self.going_left = True
@@ -175,6 +182,7 @@ class Player(pyglet.sprite.Sprite):
             self.reset_bools()
             self.going_nowhere = True
         elif not self.going_right or self.going_nowhere:
+            self.the_player.image = self.anim_right
             pyglet.clock.schedule_interval(self.move_player_right, 1/60.0)
             self.reset_bools()
             self.going_right = True
@@ -191,7 +199,9 @@ class Player(pyglet.sprite.Sprite):
             #self.going_nowhere = True
             self.the_player.y -= self.speed
         else:
-            self.the_player.image = self.idle            
+            self.the_player.image = self.idle
+
+        
 
     def move_player_up(self, dt):
         if self.allowed_up:
@@ -200,12 +210,14 @@ class Player(pyglet.sprite.Sprite):
         else:
             self.the_player.image = self.idle
 
+
     def move_player_left(self, dt):
         if self.allowed_left:
             #self.going_nowhere = True
             self.the_player.x -= self.speed
         else:
-            self.the_player.image = self.idle            
+            self.the_player.image = self.idle
+
 
     def move_player_right(self, dt):
         if self.allowed_right:
@@ -213,6 +225,16 @@ class Player(pyglet.sprite.Sprite):
             self.the_player.x += self.speed
         else:
             self.the_player.image = self.idle
+            
+    def is_moving(self, dt):
+        if not (self.the_player.x == self.o_x and self.the_player.y == self.o_y):
+            return True
+        else:
+            return False
+        
+    def updatepos(self, dt):
+        self.o_x = self.the_player.x
+        self.o_y = self.the_player.y
         
     def player_stop(self):
         self.speed = 0

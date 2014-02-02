@@ -110,8 +110,8 @@ class ActualGame(Screen):
         self.unlock()
         
     def gen_rects_player(self, dt):
-        self.center_y1 = self.player.the_player.height/2 - 1
-        self.center_y2 = self.player.the_player.height/2 + 1
+        self.center_y1 = self.player.the_player.height/2 - 6
+        self.center_y2 = self.player.the_player.height/2 + 6
         self.rectl = Rect(self.player.the_player.x - 6, 
                           self.player.the_player.y + self.center_y1, 
                           self.player.the_player.x + 4, 
@@ -120,8 +120,8 @@ class ActualGame(Screen):
                           self.player.the_player.y + self.center_y1, 
                           self.player.the_player.x + self.player.the_player.width + 4, 
                           self.player.the_player.y + self.center_y2)
-        self.center_x1 =self.player.the_player.width/2 - 1
-        self.center_x2 =self.player.the_player.width/2 + 1
+        self.center_x1 =self.player.the_player.width/2 - 6
+        self.center_x2 =self.player.the_player.width/2 + 6
         self.rectu = Rect(self.player.the_player.x + self.center_x1, 
                           self.player.the_player.y + self.player.the_player.height + 1, 
                           self.player.the_player.x + self.center_x2, 
@@ -282,16 +282,16 @@ class ActualGame(Screen):
     def on_key_press(self, key, modifiers):
         if key == self.actual_keys.DOWN:
             self.player.move_down()                                  # Move the player down if user hits down key
-            self.player = self.player.down()                         # See Player class for more information
+            #self.player = self.player.down()                         # See Player class for more information
         elif key == self.actual_keys.UP:
             self.player.move_up()
-            self.player = self.player.up()
+            #self.player = self.player.up()
         elif key == self.actual_keys.LEFT:
             self.player.move_left()
-            self.player = self.player.left()
+            #self.player = self.player.left()
         elif key == self.actual_keys.RIGHT:
             self.player.move_right()
-            self.player = self.player.right()
+            #self.player = self.player.right()
     
     def launch_map(self):
         self.str_level = str(self.level) # Convert the current level to a string
@@ -345,6 +345,7 @@ class MainMenu(Screen):
         self.window_half_x = WINDOW_SIZE_X/2
         
         self.batch = pyglet.graphics.Batch()
+        self.fg_group_2 = pyglet.graphics.OrderedGroup(5)
         self.fg_group = pyglet.graphics.OrderedGroup(4)
         self.bg_group_4 = pyglet.graphics.OrderedGroup(3)
         self.bg_group_3 = pyglet.graphics.OrderedGroup(2)
@@ -382,6 +383,10 @@ class MainMenu(Screen):
         
         self.cloud2 = load.image_aligner("res/images/cloud2.png", self.cloud_start,
                                      WINDOW_SIZE_Y-100, self.batch, self.bg_group_2)
+        
+        self.old_paper = load.image_aligner("res/images/old_paper.png", WINDOW_SIZE_X/2,
+                                     WINDOW_SIZE_Y/2, self.batch, self.fg_group_2)
+        self.old_paper.visible = False
         
         self.clouds = [self.cloud1, self.cloud2]
 
@@ -463,11 +468,13 @@ class MainMenu(Screen):
     
     def on_mouse_press(self, x, y, button, modifiers):
         if button == self.mouse.LEFT:
+            if self.old_paper.visible:
+                self.old_paper.visible = False
             if self.is_on_start:
                 self.soundplayer.pause()
                 self.game.start_playing()
             if self.is_on_help:
-                pass
+                self.old_paper.visible = True
     def on_mouse_motion(self, x, y, dx, dy):
         self.x = x
         self.y = y
@@ -478,7 +485,6 @@ class MainMenu(Screen):
 #             
 #         elif WINDOW_SIZE_Y/2 >= self.y:
 #             self.in_upper = False
-            
         if get_area(self.start_button, x, y):
             self.game.window.set_mouse_cursor(self.hand)
             self.is_on_start = True
@@ -494,6 +500,12 @@ class MainMenu(Screen):
         elif not (get_area(self.start_button, x, y) and 
                   get_area(self.instr_button, x, y) and 
                   get_area(self.settings_button, x, y)):
+            self.game.window.set_mouse_cursor(self.game.window.get_system_mouse_cursor(None))
+            self.is_on_settings = False
+            self.is_on_help = False
+            self.is_on_start = False
+            
+        if self.old_paper.visible:
             self.game.window.set_mouse_cursor(self.game.window.get_system_mouse_cursor(None))
             self.is_on_settings = False
             self.is_on_help = False
