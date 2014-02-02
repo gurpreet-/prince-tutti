@@ -7,14 +7,16 @@ PLAYER_SPEED = 2.15
 # Defines the Mummy, is able to set the Mummy's
 # speed and inform is if the mummy is speeding up.
 class Player(pyglet.sprite.Sprite):
-    def __init__(self, x, y, batch, group):
+    def __init__(self, x, y, batch, group, img):
         self.x_pos = x
         self.y_pos = y
-        self.player_image = pyglet.image.load("res/images/player.png")
-        self.the_player = pyglet.sprite.Sprite(img=self.player_image,
+        
+        
+        self.the_player = pyglet.sprite.Sprite(img=pyglet.image.load("res/images/indy/man.png"),
                                               x=self.x_pos, y=self.y_pos,
                                               batch=batch, group=group)
                                              
+        self.the_player.scale = 0.25
                                               
         self.speed = PLAYER_SPEED
         self.allowed_down = True
@@ -23,6 +25,23 @@ class Player(pyglet.sprite.Sprite):
         self.allowed_right = True
         self.reset_bools()
         self.going_nowhere = True
+
+    def down(self):
+        self.the_player.image = pyglet.image.load("res/images/indy/man.png")
+        return self
+
+    def right(self):
+        self.the_player.image = pyglet.image.load('res/images/indy/man_right.png')   
+        return self
+   
+    def left(self):
+        self.the_player.image = pyglet.image.load('res/images/indy/man_left.png')    
+        return self
+    
+    def up(self):
+        self.the_player.image = pyglet.image.load('res/images/indy/man_back.png')    
+        return self  
+
         
     def allow_bools(self):
         self.allowed_down = True
