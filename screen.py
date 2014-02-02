@@ -466,7 +466,8 @@ class MainMenu(Screen):
             if self.is_on_start:
                 self.soundplayer.pause()
                 self.game.start_playing()
-            
+            if self.is_on_help:
+                pass
     def on_mouse_motion(self, x, y, dx, dy):
         self.x = x
         self.y = y
