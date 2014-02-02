@@ -2,7 +2,7 @@ import pyglet
 
 MUMMY_SPEED = 2
 MUMMY_DASH = 3
-PLAYER_SPEED = 2.15
+PLAYER_SPEED = 2.5
 
 # Defines the Mummy, is able to set the Mummy's
 # speed and inform is if the mummy is speeding up.

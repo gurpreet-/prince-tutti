@@ -42,6 +42,8 @@ class Maps:
         self.torch = pyglet.image.load("res/images/torch.png")
         self.gate = pyglet.image.load("res/images/gate.png")
         self.exit_gate = pyglet.image.load("res/images/chain2.png")
+        self.gray_stone = pyglet.image.load("res/images/gray_stone.png")
+        self.gray_sand_stone = pyglet.image.load("res/images/gray_brick.png")
      
         
     ### Impliment Dictionaries in order to increase readability of code  
@@ -61,6 +63,7 @@ class Maps:
             # 7 = 27x1
             # u = brick under sand (bg)
             # ; = stone under sand (bg)
+            # ? = gray patterned stone (bg)
             # b = brick
             # t = torch
             # k = key
@@ -144,6 +147,20 @@ class Maps:
                                                        y=self.tile_y, batch=self.batch,
                                                        group=self.group)
                     self.sprites.append(self.stonesand_sprite) # See above
+
+                elif letter == "?":
+                    self.graystone_sprite = pyglet.sprite.Sprite(self.gray_stone, x=self.tile_x,
+                                                       y=self.tile_y, batch=self.batch,
+                                                       group=self.group)
+                    self.sprites.append(self.graystone_sprite) # See above
+
+                elif letter == "/":
+                    self.graystonesand_sprite = pyglet.sprite.Sprite(self.gray_sand_stone, 
+                                                                     x=self.tile_x, 
+                                                                     y=self.tile_y, 
+                                                                     batch=self.batch, 
+                                                                     group=self.group)
+                    self.sprites.append(self.graystonesand_sprite) # See above
                     
                 elif letter == "k":
                     self.key_sprite = pyglet.sprite.Sprite(self.key, x=self.tile_x,

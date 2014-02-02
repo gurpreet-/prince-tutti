@@ -83,7 +83,6 @@ class Rectangle(object):
             ('c4B', [0, 0, 0, 255] * 4))
             
             
-		
 
 #b = utils.get_sprites_from_map(self)
 #print(b)

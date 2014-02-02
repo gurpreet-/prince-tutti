@@ -1,7 +1,7 @@
 import pyglet
 from pyglet.gl import *
 import load, interface, map, player
-from collision import get_rect, get_area, Rect
+from collision import get_rect, get_area, get_sarea, Rect
 from random import randint
 from math import floor
 
@@ -83,40 +83,58 @@ class ActualGame(Screen):
         self.player = player.Player(68, 480, self.tile_batch, self.fg_group)
         # Useful for collision detection
         self.lights = []
+        self.rectang = []
+        
         self.time = 0
-        pyglet.clock.schedule_interval(self.gen_rects, 1/15.0)
+        pyglet.clock.schedule_interval(self.gen_rects, 1/60.0)
+        pyglet.clock.schedule_interval(self.gen_rects2, 1/60.0)
         pyglet.clock.schedule_interval(self.detect, 1/2.0)
-        pyglet.clock.schedule_interval(self.collision, 1/15.0)
+        pyglet.clock.schedule_interval(self.collision, 1/60.0)
         pyglet.clock.schedule_interval(self.collision_coins, 1/15.0)
         pyglet.clock.schedule_interval(self.collision_key, 1/15.0)
         pyglet.clock.schedule_interval(self.update_score, 2.0)
         pyglet.clock.schedule_once(self.make_light, 2.0)
-
-        self.rectl = 0
-        self.rectr = 0
-        self.rectu = 0
-        self.rectd = 0
+        self.invisible_box = pyglet.image.load("res/images/collision.png")
+        self.invisible_box2 = pyglet.image.load("res/images/collision2.png")
+        self.invis1 = pyglet.sprite.Sprite(img=self.invisible_box, x=self.player.the_player.x + 
+                                           self.player.the_player.width,
+                                     y=self.player.the_player.y, batch=self.interface_batch,
+                                     group=self.bg2_group)
+        self.invis2 = pyglet.sprite.Sprite(img=self.invisible_box, x=self.player.the_player.x,
+                                     y=self.player.the_player.y, batch=self.interface_batch,
+                                     group=self.bg2_group)
+        self.invis3 = pyglet.sprite.Sprite(img=self.invisible_box2, x=self.player.the_player.x,
+                                     y=self.player.the_player.y + self.player.the_player.height, 
+                                     batch=self.interface_batch,
+                                     group=self.bg2_group)
+        self.invis4 = pyglet.sprite.Sprite(img=self.invisible_box2, x=self.player.the_player.x,
+                                     y=self.player.the_player.y, 
+                                     batch=self.interface_batch,
+                                     group=self.bg2_group)
+        self.rectang.append(self.invis1)
+        self.rectang.append(self.invis2)
+        self.rectang.append(self.invis3)
+        self.rectang.append(self.invis4)
+        
         self.circle = pyglet.resource.image("spot1.png")
         self.volume_num = 1
         self.unlock()
-        
+    
+    # 0 = right
+    # 1 = left
+    # 2 = top
+    # 3 = bottom
     def gen_rects(self, dt):
-        self.rectl = Rect(self.player.the_player.x-7, 
-                          self.player.the_player.y-3, 
-                          self.player.the_player.x+10, 
-                          self.player.the_player.y+5)
-        self.rectr = Rect(self.player.the_player.x, 
-                          self.player.the_player.y-2, 
-                          self.player.the_player.x+20, 
-                          self.player.the_player.y+18)
-        self.rectu = Rect(self.player.the_player.x+2, 
-                          self.player.the_player.y+10, 
-                          self.player.the_player.x+15, 
-                          self.player.the_player.y+28)
-        self.rectd = Rect(self.player.the_player.x-3, 
-                          self.player.the_player.y-11, 
-                          self.player.the_player.x+3, 
-                          self.player.the_player.y-8)
+        self.rectang[0].x = self.player.the_player.x + self.player.the_player.width + 5
+        self.rectang[0].y = self.player.the_player.y
+        self.rectang[1].x = self.player.the_player.x - 5
+        self.rectang[1].y = self.player.the_player.y - 2
+        
+    def gen_rects2(self, dt):
+        self.rectang[2].x = self.player.the_player.x + 1
+        self.rectang[2].y = self.player.the_player.y + self.player.the_player.height + 5
+        self.rectang[3].x = self.player.the_player.x
+        self.rectang[3].y = self.player.the_player.y - 5
         
     def make_light(self, dt):
         for torch in self.f_map.return_torches():
@@ -147,16 +165,16 @@ class ActualGame(Screen):
     def collision(self, dt):
         self.player.allow_bools()
         for rectangles in self.f_map.return_sprites():
-            if get_rect(rectangles).collides(self.rectl):
-                self.player.no_left()
- 
-            if get_rect(rectangles).collides(self.rectr):
+            if get_sarea(rectangles, self.rectang[0].x, self.rectang[0].y):
                 self.player.no_right()
-             
-            if get_rect(rectangles).collides(self.rectu):
+ 
+            if get_sarea(rectangles, self.rectang[1].x, self.rectang[1].y):
+                self.player.no_left()
+              
+            if get_sarea(rectangles, self.rectang[2].x, self.rectang[2].y):
                 self.player.no_up()
-             
-            if get_rect(rectangles).collides(self.rectd):
+              
+            if get_sarea(rectangles, self.rectang[3].x, self.rectang[3].y):
                 self.player.no_down()
 
     def collision_coins(self, dt):
