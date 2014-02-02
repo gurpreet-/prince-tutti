@@ -225,36 +225,57 @@ class Player(pyglet.sprite.Sprite):
     
     def return_pos(self):
         return self.the_player.position
-        
+    
+# The mummy class is the the AI coded mummy's
 class Mummy(Player):
     def __init__(self, x, y, batch, group, img):
+        super().__init__(x, y, batch, group, img)
         self.x_pos = x
         self.y_pos = y
+        self.idle = self.mummy_image = pyglet.image.load("res/images/mummy.png")
+        self.the_mummy = pyglet.sprite.Sprite(self.mummy_image,
+                                              x=self.x_pos, y=self.y_pos,
+                                              batch=batch, group=group)                                     
+        self.the_mummy.scale = 0.25
 
-                
-        self.mummy_image = pyglet.image.load("res/images/mummy.png")
-                
-                
-        self.the_mummy = pyglet.sprite.Sprite(img=self.mummy_image,
-                                          x=self.x_pos, y=self.y_pos,
-                                          batch=batch, group=group) 
-        
-        self.the_mummy.scale = 0.35
-                                                      
-        self.speed = MUMMY_SPEED     
-        self.allowed_down = True
-        self.allowed_up = True
-        self.allowed_left = True
-        self.allowed_right = True
+                                              
+        self.speed = MUMMY_SPEED
+        self.allowed_down = False
+        self.allowed_up = False
+        self.allowed_left = False
+        self.allowed_right = False
         self.reset_bools()
-        self.going_nowhere = True    
+        self.going_nowhere = True
+        
+        pyglet.clock.schedule_interval(self.move_mummy_right, 1/60.0)
+        pyglet.clock.schedule_interval(self.move_mummy_left, 1/60.0)
+        pyglet.clock.schedule_interval(self.move_mummy_up, 1/60.0)
+        pyglet.clock.schedule_interval(self.move_mummy_down, 1/60.0)
+        
+    def move_mummy_down(self, dt):
+        if self.allowed_down:
+            #self.going_nowhere = True
+            self.the_mummy.y -= self.speed
+        else:
+            self.the_mummy.image = self.idle     
+        
+    def move_mummy_up(self, dt):
+        if self.allowed_up:
+            #self.going_nowhere = True
+            self.the_mummy.y += self.speed
+        else:
+            self.the_mummy.image = self.idle
 
-    #Override method from paren class
+    def move_mummy_left(self, dt):
+        if self.allowed_left:
+            #self.going_nowhere = True
+            self.the_mummy.x -= self.speed
+        else:
+            self.the_mummy.image = self.idle            
 
-
-#     def distance(point_1=(0, 0), point_2=(0, 0)): 
-#        """Returns the distance between player and a mummy""" 
-#        return math.sqrt( 
-#                 (point_1[0] - point_2[0]) ** 2 + 
-#                 (point_1[1] - point_2[1]) ** 2)    
-    
+    def move_mummy_right(self, dt):
+        if self.allowed_right:
+            #self.going_nowhere = True
+            self.the_mummy.x += self.speed
+        else:
+            self.the_mummy.image = self.idle
