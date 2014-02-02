@@ -80,7 +80,7 @@ class ActualGame(Screen):
         self.soundplayer.play()
 
         # Create the actual player who plays in the game
-        self.player = player.Player(68, 480, self.tile_batch, self.fg_group)
+        self.player = player.Player(68, 480, self.tile_batch, self.fg_group, img = pyglet.image.load('res/images/indy/man.png')) 
         # Useful for collision detection
         self.lights = []
         self.rectang = []
@@ -240,14 +240,17 @@ class ActualGame(Screen):
 
     def on_key_press(self, key, modifiers):
         if key == self.actual_keys.DOWN:
-            self.player.move_down() # Move the player down if user hits down key
-                                    # See Player class for more information
+            self.player.move_down()                                  # Move the player down if user hits down key
+            self.player = self.player.down()                         # See Player class for more information
         elif key == self.actual_keys.UP:
             self.player.move_up()
+            self.player = self.player.up()
         elif key == self.actual_keys.LEFT:
             self.player.move_left()
+            self.player = self.player.left()
         elif key == self.actual_keys.RIGHT:
             self.player.move_right()
+            self.player = self.player.right()
     
     def launch_map(self):
         self.str_level = str(self.level) # Convert the current level to a string
