@@ -266,29 +266,81 @@ class Level(Interface):
         self.x_loc = x
         self.y_loc = y
         self.level_number = level
-        self.text_of_level = str(self.return_level())
-        self.levelplacer = pyglet.text.document.FormattedDocument(self.text_of_level)
-        self.levelplacer.set_style(0, len(self.text_of_level),
-                                   dict(color=(0, 0, 0, 255)))
-         
-         
-        self.layoutoflevel = pyglet.text.layout.IncrementalTextLayout(self.levelplacer, 
-                                                                      20, 
-                                                                      30, 
-                                                                      multiline=True, 
-                                                                      batch=self.batch, 
-                                                                      group=self.group_text)
+        self.txt_lvl = str(self.return_level())
+        self.sprite_array = []
         
-        self.position(self.layoutoflevel, self.x_loc+60, y=WINDOW_SIZE_Y/1.17+40)
+        self.n0 = pyglet.resource.image("0.png") 
+        self.n1 = pyglet.resource.image("1.png")
+        self.n2 = pyglet.resource.image("2.png")
+        self.n3 = pyglet.resource.image("3.png")
+        self.n4 = pyglet.resource.image("4.png")
+        self.n5 = pyglet.resource.image("5.png")
+        self.n6 = pyglet.resource.image("6.png")
+        self.n7 = pyglet.resource.image("7.png")
+        self.n8 = pyglet.resource.image("8.png")
+        self.n9 = pyglet.resource.image("9.png")
+        self.update_level()
         
     
     def return_level(self):
         return self.level_number + 1
-
-    def position(self, document, x, y):
-        document.x = x
-        document.y = y
     
     def update_level(self):
-        self.levelplacer.delete_text(0, len(self.text_of_level))
-        self.document.insert_text(0, str(self.text_of_level))
+        if len(self.txt_lvl) == 1:
+            self.x_loc += 20
+        for letter in self.txt_lvl:
+                if letter == "0":
+                    self.sn0 = pyglet.sprite.Sprite(img=self.n0, x=self.x_loc+22, 
+                                         y=self.y_loc+30, batch=self.batch, group=self.group_text)
+                    self.sprite_array.append(self.sn0)
+                    
+                elif letter == "1":
+                    self.sn1 = pyglet.sprite.Sprite(img=self.n1, x=self.x_loc+22, 
+                                         y=self.y_loc+30, batch=self.batch, group=self.group_text)
+                    self.sprite_array.append(self.sn1)
+                    
+                elif letter == "2":
+                    self.sn2 = pyglet.sprite.Sprite(img=self.n2, x=self.x_loc+22, 
+                                         y=self.y_loc+30, batch=self.batch, group=self.group_text)
+                    self.sprite_array.append(self.sn2)
+                    
+                elif letter == "3":
+                    self.sn3 = pyglet.sprite.Sprite(img=self.n3, x=self.x_loc+22, 
+                                         y=self.y_loc+30, batch=self.batch, group=self.group_text)
+                    self.sprite_array.append(self.sn3)
+                    
+                elif letter == "4":
+                    self.sn4 = pyglet.sprite.Sprite(img=self.n4, x=self.x_loc+22, 
+                                         y=self.y_loc+30, batch=self.batch, group=self.group_text)
+                    self.sprite_array.append(self.sn4)
+                    
+                elif letter == "5":
+                    self.sn5 = pyglet.sprite.Sprite(img=self.n5, x=self.x_loc+22, 
+                                         y=self.y_loc+30, batch=self.batch, group=self.group_text)
+                    self.sprite_array.append(self.sn5)
+                    
+                elif letter == "6":
+                    self.sn6 = pyglet.sprite.Sprite(img=self.n6, x=self.x_loc+22, 
+                                         y=self.y_loc+30, batch=self.batch, group=self.group_text)
+                    self.sprite_array.append(self.sn6)
+                    
+                elif letter == "7":
+                    self.sn7 = pyglet.sprite.Sprite(img=self.n7, x=self.x_loc+22, 
+                                         y=self.y_loc+30, batch=self.batch, group=self.group_text)
+                    self.sprite_array.append(self.sn7)
+                    
+                elif letter == "8":
+                    self.sn8 = pyglet.sprite.Sprite(img=self.n8, x=self.x_loc+22, 
+                                         y=self.y_loc+30, batch=self.batch, group=self.group_text)
+                    self.sprite_array.append(self.sn8)
+                    
+                elif letter == "9":
+                    self.sn9 = pyglet.sprite.Sprite(img=self.n9, x=self.x_loc+22, 
+                                         y=self.y_loc+30, batch=self.batch, group=self.group_text)
+                    self.sprite_array.append(self.sn9)
+                    
+                self.x_loc += 40
+                
+        for sprite in self.sprite_array:
+            sprite.scale = 0.6
+                    

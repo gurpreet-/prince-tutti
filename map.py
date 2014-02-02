@@ -44,6 +44,7 @@ class Maps:
         self.exit_gate = pyglet.image.load("res/images/chain2.png")
         self.gray_stone = pyglet.image.load("res/images/gray_stone.png")
         self.gray_sand_stone = pyglet.image.load("res/images/gray_brick.png")
+        self.wooden = pyglet.image.load("res/images/walk.png")
      
         
     ### Impliment Dictionaries in order to increase readability of code  
@@ -162,6 +163,14 @@ class Maps:
                                                                      batch=self.batch, 
                                                                      group=self.group)
                     self.sprites.append(self.graystonesand_sprite) # See above
+
+                elif letter == "w":
+                    self.wooden_sprite = pyglet.sprite.Sprite(self.wooden, 
+                                                                     x=self.tile_x, 
+                                                                     y=self.tile_y, 
+                                                                     batch=self.batch, 
+                                                                     group=self.group)
+                    self.sprites.append(self.wooden_sprite) # See above
                     
                 elif letter == "k":
                     self.key_sprite = pyglet.sprite.Sprite(self.key, x=self.tile_x,

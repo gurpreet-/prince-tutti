@@ -106,6 +106,7 @@ class ActualGame(Screen):
         self.rectd = 0
         self.circle = pyglet.resource.image("spot1.png")
         self.volume_num = 1
+        self.on_next_level = False
         self.unlock()
         
     def gen_rects_player(self, dt):
@@ -167,7 +168,11 @@ class ActualGame(Screen):
             self.player.the_player.x < 0 or 
             self.player.the_player.y > WINDOW_SIZE_Y or
             self.player.the_player.y < 0):
-            print("out of bounds")
+            if not self.on_next_level:
+                self.level += 1
+                self.soundplayer.pause()
+                self.game.goto_next_level()
+                self.on_next_level = True
         self.time += 1
         if self.time >= 100:
             self.time = 0
@@ -246,10 +251,14 @@ class ActualGame(Screen):
     def update_score(self, dt):
         self.interface.update_score_value()
         
+    # Unlocks the gate. Please note the actual level
+    # is self.level + 1
     def unlock(self):
         if self.level == 0:
-            pyglet.clock.schedule_once(self.unlock_key_gate, 10.0)
+            pyglet.clock.schedule_once(self.unlock_key_gate, 20.0)
         if self.level == 1:
+            pyglet.clock.schedule_once(self.unlock_key_gate, 26.0)
+        if self.level == 2:
             pyglet.clock.schedule_once(self.unlock_key_gate, 32.0)
         
     def unlock_key_gate(self, dt):
@@ -297,6 +306,7 @@ class ActualGame(Screen):
             self.soundplayer.next()
 
     def start(self):
+        self.game.window.clear()
         self.actual_keys = pyglet.window.key
         self.game.window.set_mouse_cursor(self.game.window.get_system_mouse_cursor(None))
         self.launch_map()
@@ -380,9 +390,9 @@ class MainMenu(Screen):
         # or out of fullscreen mode.
         self.cloud1.scale = 0.3
         self.cloud2.scale = 0.3
-        self.start_button.scale = 0.13
-        self.instr_button.scale = 0.13
-        self.settings_button.scale = 0.13
+        self.start_button.scale = 0.62
+        self.instr_button.scale = 0.8
+        self.settings_button.scale = 0.76
         self.sun.scale = 0.92
         self.sand.scale = 0.86
         self.pyramid.scale = 1.3
