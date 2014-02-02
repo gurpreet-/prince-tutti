@@ -35,7 +35,7 @@ class Player(pyglet.sprite.Sprite):
         self.anim_up = pyglet.image.Animation.from_image_sequence([self.up1, self.up2], 0.5, True)
         self.anim_right = pyglet.image.Animation.from_image_sequence([self.right1, self.right2], 0.5, True)
         
-        
+        self.idle = pyglet.image.load("res/images/indy/man.png")
         
         
         self.the_player = pyglet.sprite.Sprite(img=pyglet.image.load("res/images/indy/man.png"),
@@ -185,25 +185,34 @@ class Player(pyglet.sprite.Sprite):
     def reset_y(self):
         self.the_player.y = 0
         
+
     def move_player_down(self, dt):
         if self.allowed_down:
             #self.going_nowhere = True
             self.the_player.y -= self.speed
-            
+        else:
+            self.the_player.image = self.idle            
+
     def move_player_up(self, dt):
         if self.allowed_up:
             #self.going_nowhere = True
             self.the_player.y += self.speed
+        else:
+            self.the_player.image = self.idle
 
     def move_player_left(self, dt):
         if self.allowed_left:
             #self.going_nowhere = True
             self.the_player.x -= self.speed
-            
+        else:
+            self.the_player.image = self.idle            
+
     def move_player_right(self, dt):
         if self.allowed_right:
             #self.going_nowhere = True
             self.the_player.x += self.speed
+        else:
+            self.the_player.image = self.idle
         
     def player_stop(self):
         self.speed = 0
@@ -216,5 +225,36 @@ class Player(pyglet.sprite.Sprite):
     
     def return_pos(self):
         return self.the_player.position
+        
+class Mummy(Player):
+    def __init__(self, x, y, batch, group, img):
+        self.x_pos = x
+        self.y_pos = y
 
+                
+        self.mummy_image = pyglet.image.load("res/images/mummy1.png")
+                
+                
+        self.the_mummy = pyglet.sprite.Sprite(img=self.mummy_image,
+                                          x=self.x_pos, y=self.y_pos,
+                                          batch=batch, group=group) 
+        
+        self.the_mummy.scale = 0.35
+                                                      
+        self.speed = MUMMY_SPEED     
+        self.allowed_down = True
+        self.allowed_up = True
+        self.allowed_left = True
+        self.allowed_right = True
+        self.reset_bools()
+        self.going_nowhere = True    
+
+    #Override method from paren class
+
+
+    def distance(point_1=(0, 0), point_2=(0, 0)): 
+       """Returns the distance between player and a mummy""" 
+       return math.sqrt( 
+                (point_1[0] - point_2[0]) ** 2 + 
+                (point_1[1] - point_2[1]) ** 2)    
     
