@@ -81,6 +81,8 @@ class ActualGame(Screen):
 
         # Create the actual player who plays in the game
         self.indy = pyglet.image.load('res/images/indy/man.png')
+        self.starting_playerx = 68
+        self.starting_playery = 480
         self.player = player.Player(68, 480, self.tile_batch, self.fg_group, self.indy)
         # Creates an AI mummy
         self.mummy = player.Mummy(200, 620, self.tile_batch, self.fg_group, img = pyglet.image.load("res/images/mummy.png"))
@@ -95,10 +97,11 @@ class ActualGame(Screen):
         pyglet.clock.schedule_interval(self.gen_rects_mummys, 1/60.0)
         pyglet.clock.schedule_interval(self.collision, 1/60.0)
         pyglet.clock.schedule_interval(self.collision_mummy, 1/60.0)
+        pyglet.clock.schedule_interval(self.collision_with_mummy, 1/60.0)
         pyglet.clock.schedule_interval(self.collision_coins, 1/15.0)
         pyglet.clock.schedule_interval(self.collision_key, 1/15.0)
         pyglet.clock.schedule_interval(self.update_score, 2.0)
-        pyglet.clock.schedule_once(self.make_light, 2.0)
+        pyglet.clock.schedule_once(self.make_light, 3.0)
 
         self.rectl = 0
         self.rectr = 0
@@ -163,12 +166,14 @@ class ActualGame(Screen):
         return set(self.lights)
         
     def detect(self, dt):
-        # Check where the player is
+        # Check where the player is and if the player
+        # is off the screen assume they have completed the level.
         if (self.player.the_player.x > WINDOW_SIZE_X or 
             self.player.the_player.x < 0 or 
             self.player.the_player.y > WINDOW_SIZE_Y or
             self.player.the_player.y < 0):
             if not self.on_next_level:
+                self.interface.carry_all_value()
                 self.level += 1
                 self.soundplayer.pause()
                 self.game.goto_next_level()
@@ -182,7 +187,7 @@ class ActualGame(Screen):
             if self.time < 50 and sprite.opacity > 20:
                 sprite.opacity -= 1
                 
-            
+    # Get what the player collides with
     def collision(self, dt):
         self.player.allow_bools()
         for rectangles in self.f_map.return_sprites():
@@ -197,7 +202,8 @@ class ActualGame(Screen):
              
             if get_rect(rectangles).collides(self.rectd):
                 self.player.no_down()
-                
+
+    # Get what the mummies collide with       
     def collision_mummy(self, dt):
         pass
 #         self.mummy.allow_bools()
@@ -214,22 +220,54 @@ class ActualGame(Screen):
 #             if get_rect(rectangles).collides(self.rectmd):
 #                 self.mummy.no_down()
 
+    # Does the player collide with coins?
     def collision_coins(self, dt):
         for coin in self.f_map.return_coins():
             if get_rect(coin).collides(get_rect(self.player.the_player)):
                 if coin.visible == True:
                     self.interface.update_bonus()
                     coin.visible = False
-                    
+    
+    # Collision with key(s)?      
     def collision_key(self, dt):
         for key in self.f_map.return_keys():
             if get_rect(key).collides(get_rect(self.player.the_player)):
                 if key.visible == True:
-                    self.interface.update_key_scroll()
+                    self.interface.gotthe_key_scroll()
                     pyglet.clock.schedule_once(self.unlock_exit_gate, 0.1)
                     pyglet.clock.schedule_interval(self.volume_decrease, 1/10)
                     key.visible = False
+        
+    # If the player collides with a mummy
+    # reset the screen. Lose a life
+    def collision_with_mummy(self, dt):
+        if get_rect(self.mummy.the_mummy).collides(get_rect(self.player.the_player)):
+                self.interface.lost_life()
+                if self.interface.get_lives_value() == 0:
+                    print("game over")
+                elif self.interface.get_lives_value() > 0:
+                    self.reset_all()
+
+    # Resets everything back to their normal positions      
+    def reset_all(self):
+        self.player.the_player.x = self.starting_playerx
+        self.player.the_player.y = self.starting_playery
+        pyglet.clock.unschedule(self.unlock_key_gate)
+        for obj in self.f_map.return_keygate():
+            if obj.scale < 1:
+                self.lock_key_gate()
+        for obj in self.f_map.return_exitgate():
+            if obj.scale < 1:
+                self.lock_exit_gate()
+        for obj in self.f_map.return_keys():
+            obj.visible = True
+        for obj in self.f_map.return_coins():
+            obj.visible = True
+        self.interface.revert_all_value()
+        self.interface.notgotthe_key_scroll()
+        self.unlock()
     
+    # Slowly decreases the volume if the key has been picked up
     def volume_decrease(self, dt):
         if self.volume_num <= 0.2:
             pyglet.clock.unschedule(self.volume_decrease)
@@ -241,13 +279,15 @@ class ActualGame(Screen):
             pyglet.clock.schedule_interval(self.volume_increase, 1.0)
         self.soundplayer.volume = self.volume_num
         self.volume_num -= 0.05
-        
+    
+    # Increases the volume of music
     def volume_increase(self, dt):
         if self.volume_num > 1:
             pyglet.clock.unschedule(self.volume_increase)
         self.soundplayer.volume = self.volume_num
         self.volume_num += 0.1
-                    
+    
+    # Update the score value every second    
     def update_score(self, dt):
         self.interface.update_score_value()
         
@@ -260,29 +300,38 @@ class ActualGame(Screen):
             pyglet.clock.schedule_once(self.unlock_key_gate, 26.0)
         if self.level == 2:
             pyglet.clock.schedule_once(self.unlock_key_gate, 32.0)
-        
+            
+    # Unlock the gate if the player has not recently lost a life
     def unlock_key_gate(self, dt):
         for obj in self.f_map.return_keygate():
-            for i in range(10, 0, -1):
-                obj.scale = i/10
-                obj.y += i/2
+            obj.scale = 0.99
+            obj.y += 32
             self.load_effect = pyglet.resource.media("chain_gate.mp3")
             self.effects.queue(self.load_effect)
             self.effects.play()
             
     def unlock_exit_gate(self, dt):
         for obj in self.f_map.return_exitgate():
-            for i in range(10, 0, -1):
-                obj.scale = i/10
-                obj.y += i/2
+            obj.scale = 0.99
+            obj.y += 32
             self.load_effect = pyglet.resource.media("chain_gate.mp3")
             self.effects.queue(self.load_effect)
             self.effects.play()
 
+    def lock_key_gate(self):
+        for obj in self.f_map.return_keygate():
+            obj.y -= 32
+            obj.scale = 1
+            
+    def lock_exit_gate(self):
+        for obj in self.f_map.return_exitgate():
+            obj.y -= 32
+            obj.scale = 1
+
     def on_key_press(self, key, modifiers):
         if key == self.actual_keys.DOWN:
-            self.player.move_down()                                  # Move the player down if user hits down key
-            #self.player = self.player.down()                         # See Player class for more information
+            self.player.move_down()                   # Move the player down if user hits down key
+            #self.player = self.player.down()              # See Player class for more information
         elif key == self.actual_keys.UP:
             self.player.move_up()
             #self.player = self.player.up()
@@ -375,9 +424,6 @@ class MainMenu(Screen):
         self.instr_button = load.image_aligner("res/images/main_help.png", self.window_half_x,
                                           WINDOW_SIZE_Y/2, self.batch, self.fg_group)
 
-        self.settings_button = load.image_aligner("res/images/main_settings.png", self.window_half_x,
-                                             WINDOW_SIZE_Y/2-100, self.batch, self.fg_group)
-
         self.cloud1 = load.image_aligner("res/images/cloud.png", self.cloud_start,
                                      WINDOW_SIZE_Y-300, self.batch, self.bg_group_2)
         
@@ -397,7 +443,6 @@ class MainMenu(Screen):
         self.cloud2.scale = 0.3
         self.start_button.scale = 0.62
         self.instr_button.scale = 0.8
-        self.settings_button.scale = 0.76
         self.sun.scale = 0.92
         self.sand.scale = 0.86
         self.pyramid.scale = 1.3
@@ -418,7 +463,6 @@ class MainMenu(Screen):
         # Bools to check where the mouse is
         self.is_on_start = False
         self.is_on_help = False
-        self.is_on_settings = False
         
     def counter(self, dt):
         if self.count >= self.reset_count:
@@ -492,22 +536,15 @@ class MainMenu(Screen):
         elif get_area(self.instr_button, x, y):
             self.game.window.set_mouse_cursor(self.hand)
             self.is_on_help = True
-            
-        elif get_area(self.settings_button, x, y):
-            self.game.window.set_mouse_cursor(self.hand)
-            self.is_on_settings = True
         
         elif not (get_area(self.start_button, x, y) and 
-                  get_area(self.instr_button, x, y) and 
-                  get_area(self.settings_button, x, y)):
+                  get_area(self.instr_button, x, y)):
             self.game.window.set_mouse_cursor(self.game.window.get_system_mouse_cursor(None))
-            self.is_on_settings = False
             self.is_on_help = False
             self.is_on_start = False
             
         if self.old_paper.visible:
             self.game.window.set_mouse_cursor(self.game.window.get_system_mouse_cursor(None))
-            self.is_on_settings = False
             self.is_on_help = False
             self.is_on_start = False
         

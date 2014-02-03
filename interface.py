@@ -65,6 +65,7 @@ class Interface:
                            self.score_scroll.height/1.5)
         
         # Create the remaining elements
+        self.active_key_scroll = pyglet.resource.image("parchment.png")
         self.key_scroll = pyglet.resource.image("parchment_faded.png")
         self.key_scroll_sprite = pyglet.sprite.Sprite(img=self.key_scroll, 
                                                      x=self.logo.width + 
@@ -102,24 +103,49 @@ class Interface:
     def update_bonus(self):
         self.bonus.update_bonus()
         
-    def update_key_scroll(self):
-        self.key_scroll_sprite.image = pyglet.resource.image("parchment.png")
-#         for i in range(int(self.key_scroll_sprite.y), int(self.key_scroll_sprite.y + 200)):
-#             if i == self.key_scroll_sprite.y + 199:
-#                 pass
-#             self.key_scroll_sprite.y = i
-        
-    # Call this to update the level count.
-#     def update_level_value(self):
-#         screen.
+    def gotthe_key_scroll(self):
+        self.key_scroll_sprite.image = self.active_key_scroll
+
+    def notgotthe_key_scroll(self):
+        self.key_scroll_sprite.image = self.key_scroll
 
     # Call this to return the score value.
     def get_score_value(self):
         self.score.return_score()
         
+    # Call this to revert all values.
+    def revert_all_value(self):
+        self.score.revert_score()
+        self.bonus.revert_bonus()
+        
+    # Call this to revert the score value.
+    def revert_score_value(self):
+        self.score.revert_score()
+        
+    # Call this to revert the bonus value.
+    def revert_bonus_value(self):
+        self.bonus.revert_bonus_value()
+        
+    # Call this whenever you need to carry score values forward to new level.
+    def carry_all_value(self):
+        self.score.update_old_score()
+        self.bonus.update_old_bonus()
+
+    # Call this whenever you need to carry score values forward to new level.
+    def carry_score_value(self):
+        self.score.update_old_score()
+        
+    # Call this whenever you need to carry score values forward to new level.
+    def carry_bonus_value(self):
+        self.bonus.update_old_bonus()
+        
+    # Call this to return the lives value
+    def lost_life(self):
+        self.lives.lose_life()
+        
     # Call this to return the lives value
     def get_lives_value(self):
-        self.lives.return_lives()
+        return self.lives.return_lives()
         
 
 # Updates the score.
@@ -131,6 +157,7 @@ class Score(Interface):
         self.y_loc = y
         self.width = width
         self.height = height
+        self.score_num_old = 0
         self.score_num = 0
         
         self.scoreimage = pyglet.resource.image("score.png")
@@ -153,6 +180,14 @@ class Score(Interface):
         self.position(self.layout, self.x_loc + self.width/2, self.y_loc)
         self.update_score()
         
+    def revert_score(self):
+        self.score_num = self.score_num_old
+        self.update_score()
+    
+    # Updates the old score value so that if we're going on next level
+    # the score gets carried over.
+    def update_old_score(self):
+        self.score_num_old = self.score_num
     
     def return_score(self):
         return self.score_num
@@ -162,9 +197,9 @@ class Score(Interface):
         document.y = y
     
     def update_score(self):
-        self.document.delete_text(len(self.document.text)-len(str(self.score_num)), len(self.document.text)+1)
+        self.document.delete_text(0, len(self.document.text))
         self.score_num += 1
-        self.document.insert_text(len(self.document.text), str(self.score_num))
+        self.document.insert_text(0, " \n \n " + str(self.score_num))
 
 # Updates the lives.
 class Lives(Interface):
@@ -178,7 +213,6 @@ class Lives(Interface):
         self.lives_num = 3
         self.lives_array = []
         self.position_lives = self.x_loc
-        self.fnt = pyglet.font.load("Times New Roman", 20)
         
         self.livesimage = pyglet.resource.image("lives.png")
         self.heartimage = pyglet.resource.image("heart.png")
@@ -203,18 +237,24 @@ class Lives(Interface):
     def return_lives(self):
         return self.lives_num
     
+    def lose_life(self):
+        self.lives_num -= 1
+        if len(self.lives_array) > 0:
+            self.lives_array[-1].visible = False
+            self.lives_array.pop()
+    
     def position(self, document, x, y):
         document.x = x
         document.y = y
     
     def update_lives(self):
-        for lives in range(0, self.return_lives()):
-            self.heart_sprite =  pyglet.sprite.Sprite(img=self.heartimage, 
-                                                      x=self.position_lives+55, y=self.y_loc+37, 
-                                                      batch=self.batch, group=self.group_text)
-            self.lives_array.append(self.heart_sprite)
-            self.position_lives += 23
-
+        if not(len(self.lives_array) >= self.lives_num):
+            for lives in range(0, self.return_lives()):
+                self.heart_sprite =  pyglet.sprite.Sprite(img=self.heartimage, 
+                                                          x=self.position_lives+55, y=self.y_loc+37, 
+                                                          batch=self.batch, group=self.group_text)
+                self.lives_array.append(self.heart_sprite)
+                self.position_lives += 23
 # Updates the bonus points.
 class Bonus(Interface):
     def __init__(self, group_text, batch, x, y, width, height):
@@ -224,6 +264,7 @@ class Bonus(Interface):
         self.y_loc = y
         self.width = width
         self.height = height
+        self.bonus_num_old = 0
         self.bonus_num = 0
         
         self.bonusimage = pyglet.resource.image("bonus.png")
@@ -249,7 +290,15 @@ class Bonus(Interface):
         self.position(self.layout, self.x_loc + self.width/2 -10, self.y_loc)
         self.update_bonus()
         
+    def revert_bonus(self):
+        self.bonus_num = self.bonus_num_old
+        self.update_bonus()
     
+    # Updates the old bonus value so that if we're going on next level
+    # the bonus gets carried over.
+    def update_old_bonus(self):
+        self.bonus_num_old = self.bonus_num
+        
     def return_bonus(self):
         return self.bonus_num
     
@@ -258,9 +307,9 @@ class Bonus(Interface):
         document.y = y
     
     def update_bonus(self):
-        self.document.delete_text(len(self.document.text)-len(str(self.bonus_num)), len(self.document.text))
+        self.document.delete_text(0, len(self.document.text))
         self.bonus_num += 10
-        self.document.insert_text(len(self.document.text), str(self.bonus_num))
+        self.document.insert_text(0, " \n \n " + str(self.bonus_num))
         
 # Updates the bonus points.
 class Level(Interface):
