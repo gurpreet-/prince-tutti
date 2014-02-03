@@ -1,5 +1,0 @@
-The aim of the game is to collect all gold coins then collect the key to progress to the next level. You will have to avoid all the mummies (there may be more than one) that chase you. There may be swinging doors and traps that will lead to you getting caught by the mummies. Once the mummies see you, they speed up, which creates a more intense and dramatic game.
-
-After collecting the key, you must navigate to the exit door that appears to progress to the next level.
-
-You have about 3 seconds of relief time before the next level begins. You also have 3 lives. Good luck!

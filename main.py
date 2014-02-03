@@ -14,7 +14,6 @@ class Game:
     def __init__(self):
         self.current_level = 0  # When we first create the game,
                                 # the level is 0.
-        self.current_screen = screen.Video(self)
         self.bonus_amount = 0
         self.score_amount = 0
         self.overall_score = [self.score_amount, self.bonus_amount]
@@ -91,5 +90,6 @@ class Game:
 load.load_resources() # First of all load the resources.
 if __name__ == '__main__': # Run the game!!
     game = Game() # Load game class
+    game.load_mainmenu()
     game.execute() # Then execute it
     #a.get_sprites_from_map()

@@ -582,7 +582,6 @@ class MainMenu(Screen):
     "This class presents the title screen and options for new game."
     def __init__(self, game):
         self.game = game
-        pyglet.font.add_directory("res/fonts")
         # This is where the cloud starts
         self.cloud_start = -WINDOW_SIZE_X/10
         self.cloud_end = WINDOW_SIZE_X + WINDOW_SIZE_X/10
@@ -784,48 +783,3 @@ class MainMenu(Screen):
         
     def on_eos(self):
         self.soundplayer.play()
-        
-# The video class. Plays a video.
-class Video(Screen):
-    "This class presents the video."
-    def __init__(self, game):
-        self.game = game
-        self.video_path = "res/videos/intro_vid.wmv" # Where's the arbitrary video located?
-        self.player = pyglet.media.Player() # Load the video player
-        self.player.push_handlers(on_eos=self.on_eos)
-        self.source = pyglet.media.StreamingSource() # Load the streaming device source
-        #self.load_media = pyglet.media.load(self.video_path) # Actually load the video
-        self.on_to_next = False
-        #self.player.queue(self.load_media) # Queue the video
-        #self.player.play() # Play the video
-    
-    def start(self):
-        self.video_keys = pyglet.window.key
-
-    def on_key_press(self, symbol, modifiers):
-        if symbol == self.video_keys.SPACE or symbol == self.video_keys.ENTER:
-            #self.game.window.set_fullscreen(True)
-            self.next_screen_now()
-            self.on_to_next = True
-            
-    def on_mouse_press(self, x, y, button, modifiers):
-        self.next_screen_now()
-        self.on_to_next = True
-     
-    def on_eos(self): # If the video has stopped playing and...
-        if not self.on_to_next: # if we haven't already gone onto the next screen...
-            self.next_screen_now() # stop the video playing.
-    
-    # Stops the video from playing. Goes onto the main menu.        
-    def next_screen_now(self):
-        self.player.volume = 0 # Stops the video from making anymore annoying sounds.
-        self.game.clear_current_screen()
-        self.game.load_mainmenu()
-        self.game.start_current_screen()
-
-    def clear(self):
-        self.game.window.clear()
-            
-    def on_draw(self):
-        if self.player.source and self.player.source.video_format: # If we have the source of the video and the format of it..
-            self.player.get_texture().blit(WINDOW_SIZE_X/4, WINDOW_SIZE_Y/4) # place the video at the following location.

@@ -8,8 +8,6 @@ WINDOW_SIZE_Y = 1000
 def load_resources():
     pyglet.resource.path = ["res",
                             "res/images",
-                            "res/videos",
-                            "res/fonts",
                             "res/music",
                             "res/maps"]
     
