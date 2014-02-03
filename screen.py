@@ -48,6 +48,7 @@ class ActualGame(Screen):
         self.tile_batch = pyglet.graphics.Batch()
         
         # Set up the groups so that they stack correctly.
+        self.text_group2 = pyglet.graphics.OrderedGroup(5)
         self.text_group = pyglet.graphics.OrderedGroup(4)
         self.fg_group = pyglet.graphics.OrderedGroup(3)
         self.plank_group = pyglet.graphics.OrderedGroup(2)
@@ -60,6 +61,16 @@ class ActualGame(Screen):
         self.plank = pyglet.sprite.Sprite(img=self.wood_image, x=0,
                                      y=WINDOW_SIZE_Y/1.17, batch=self.interface_batch,
                                      group=self.plank_group)
+        # Load the Game Over screen
+        self.old_paper = load.image_aligner("res/images/game_over.png", WINDOW_SIZE_X/2,
+                             WINDOW_SIZE_Y/2, self.interface_batch, self.text_group)
+        self.old_paper.visible = False
+        
+        # Load the Well done screen
+        self.well_done = load.image_aligner("res/images/well_done.png", WINDOW_SIZE_X/2,
+                             WINDOW_SIZE_Y/2, self.interface_batch, self.text_group2)
+        self.well_done.visible = False
+        
         # Load the maps
         self.b_map = map.Maps(self.bg_group, self.tile_batch)
         self.f_map = map.Maps(self.bg2_group, self.tile_batch)
@@ -102,7 +113,7 @@ class ActualGame(Screen):
         pyglet.clock.schedule_interval(self.collision_key, 1/15.0)
         pyglet.clock.schedule_interval(self.update_score, 2.0)
         pyglet.clock.schedule_once(self.make_light, 3.0)
-
+        
         self.rectl = 0
         self.rectr = 0
         self.rectu = 0
@@ -173,9 +184,33 @@ class ActualGame(Screen):
             self.player.the_player.y > WINDOW_SIZE_Y or
             self.player.the_player.y < 0):
             if not self.on_next_level:
-                self.interface.carry_all_value()
+                self.game.save(self.interface.get_score_value(), self.interface.get_bonus_value())
+                if self.level == 3:
+                    self.well_done.visible = True
+                    self.document = pyglet.text.document.FormattedDocument("Total score: " + 
+                                                                           str(self.game.load()[0] + 
+                                                                               self.game.load()[1]))
+                    self.document.set_style(0, len(self.document.text),
+                                            dict(color=(0, 0, 0, 255)))
+                    self.document.set_paragraph_style(0, len(self.document.text), dict(align=("center")))
+                    
+                     
+                     
+                    self.layout = pyglet.text.layout.IncrementalTextLayout(self.document,
+                                                                            300,
+                                                                            200,
+                                                                            multiline=True,
+                                                                            batch=self.interface_batch,
+                                                                            group=self.text_group2)
+                    self.player.the_player.x = 500
+                    self.layout.x = WINDOW_SIZE_X/3
+                    self.layout.y = WINDOW_SIZE_Y/4
+                    self.game.save(0, 0)
+                    return
                 self.level += 1
                 self.soundplayer.pause()
+                self.f_map.clean_lists()
+                self.b_map.clean_lists()
                 self.game.goto_next_level()
                 self.on_next_level = True
         self.time += 1
@@ -244,7 +279,26 @@ class ActualGame(Screen):
         if get_rect(self.mummy.the_mummy).collides(get_rect(self.player.the_player)):
                 self.interface.lost_life()
                 if self.interface.get_lives_value() == 0:
-                    print("game over")
+                    pyglet.clock.unschedule(self.update_score)
+                    self.old_paper.visible = True
+                    self.document = pyglet.text.document.FormattedDocument("Total score: " + 
+                                                                           str(self.game.load()[0] + 
+                                                                               self.game.load()[1]))
+                    self.document.set_style(0, len(self.document.text),
+                                            dict(color=(0, 0, 0, 255)))
+                    self.document.set_paragraph_style(0, len(self.document.text), dict(align=("center")))
+                    
+                     
+                     
+                    self.layout = pyglet.text.layout.IncrementalTextLayout(self.document,
+                                                                            300,
+                                                                            200,
+                                                                            multiline=True,
+                                                                            batch=self.interface_batch,
+                                                                            group=self.text_group2)
+                    self.layout.x = WINDOW_SIZE_X/3
+                    self.layout.y = WINDOW_SIZE_Y/4
+                    self.game.save(0, 0)
                 elif self.interface.get_lives_value() > 0:
                     self.reset_all()
 
@@ -294,12 +348,19 @@ class ActualGame(Screen):
     # Unlocks the gate. Please note the actual level
     # is self.level + 1
     def unlock(self):
+        if self.game.load():
+            self.score_hold = self.game.load()
+            self.interface.inject_score(self.score_hold[0])
+            self.interface.inject_bonus(self.score_hold[1])
+            self.interface.revert_all_value()
         if self.level == 0:
             pyglet.clock.schedule_once(self.unlock_key_gate, 20.0)
         if self.level == 1:
             pyglet.clock.schedule_once(self.unlock_key_gate, 26.0)
         if self.level == 2:
             pyglet.clock.schedule_once(self.unlock_key_gate, 32.0)
+        if self.level == 3:
+            pyglet.clock.schedule_once(self.unlock_key_gate, 40.0)
             
     # Unlock the gate if the player has not recently lost a life
     def unlock_key_gate(self, dt):
@@ -356,6 +417,7 @@ class ActualGame(Screen):
 
     def start(self):
         self.game.window.clear()
+        self.mouse = pyglet.window.mouse
         self.actual_keys = pyglet.window.key
         self.game.window.set_mouse_cursor(self.game.window.get_system_mouse_cursor(None))
         self.launch_map()
@@ -367,6 +429,15 @@ class ActualGame(Screen):
         self.game.window.clear()
         self.tile_batch.draw()
         self.interface_batch.draw()
+        
+    def on_mouse_press(self, x, y, button, modifiers):
+        if button == self.mouse.LEFT:
+            if self.old_paper.visible or self.well_done.visible:
+                self.game.current_level = 0
+                self.soundplayer.pause()
+                self.game.clear_current_screen()
+                self.game.load_mainmenu()
+                self.game.start_current_screen()
     
     # This method is called whenever the player reaches end of source.
     def on_eos(self):

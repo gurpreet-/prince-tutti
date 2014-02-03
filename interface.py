@@ -111,7 +111,11 @@ class Interface:
 
     # Call this to return the score value.
     def get_score_value(self):
-        self.score.return_score()
+        return self.score.return_score()
+        
+    # Call this to return the bonus value.
+    def get_bonus_value(self):
+        return self.bonus.return_bonus()
         
     # Call this to revert all values.
     def revert_all_value(self):
@@ -125,8 +129,16 @@ class Interface:
     # Call this to revert the bonus value.
     def revert_bonus_value(self):
         self.bonus.revert_bonus_value()
+    
+    # New bonus value - update the old and new bonus now.
+    def inject_bonus(self, the_new_bonus):
+        self.bonus.new_bonus(the_new_bonus)
         
-    # Call this whenever you need to carry score values forward to new level.
+    # New score value - update the old and new score now.
+    def inject_score(self, the_new_score):
+        self.score.new_score(the_new_score)
+        
+    # Call this whenever you need to store the current values.
     def carry_all_value(self):
         self.score.update_old_score()
         self.bonus.update_old_bonus()
@@ -188,6 +200,10 @@ class Score(Interface):
     # the score gets carried over.
     def update_old_score(self):
         self.score_num_old = self.score_num
+        
+    def new_score(self, score):
+        self.score_num_old = score
+        self.score_num = score
     
     def return_score(self):
         return self.score_num
@@ -298,6 +314,10 @@ class Bonus(Interface):
     # the bonus gets carried over.
     def update_old_bonus(self):
         self.bonus_num_old = self.bonus_num
+        
+    def new_bonus(self, bonus):
+        self.bonus_num_old = bonus
+        self.bonus_num = bonus
         
     def return_bonus(self):
         return self.bonus_num

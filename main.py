@@ -15,10 +15,13 @@ class Game:
         self.current_level = 0  # When we first create the game,
                                 # the level is 0.
         self.current_screen = screen.Video(self)
+        self.bonus_amount = 0
+        self.score_amount = 0
+        self.overall_score = [self.score_amount, self.bonus_amount]
 
     def load(self):
         "Load progress from disk"
-        pass
+        return self.overall_score
     
     def return_level(self):
         return self.current_level
@@ -29,9 +32,10 @@ class Game:
     def load_mainmenu(self):
         self.current_screen = screen.MainMenu(self)
 
-    def save(self):
+    def save(self, score, bonus):
         "Save progress to disk"
-        pass
+        self.overall_score[0] = score # Index 0 is the score amount
+        self.overall_score[1] = bonus # Index 1 is the bonus amount
 
     def clear_current_screen(self):
         self.current_screen.clear()

@@ -230,11 +230,11 @@ class Maps:
     def return_coins(self):
         return set(self.coins)
 
-#     def return_srectangles(self):
-#         self.rect_array = []
-#         for sprite in self.return_sprites():
-#             self.rect_array.append(collision.Rect(sprite.x, sprite.y, 
-#                                           sprite.x + sprite.width, 
-#                                           sprite.y + sprite.height))
-#         return set(self.rect_array)      
-
+    def clean_lists(self):
+        self.sprites = []
+        self.objects = []
+        self.coins = []
+        self.kgate = []
+        self.egate = []
+        self.keys = []
+        self.torches = []
