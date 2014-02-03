@@ -372,6 +372,9 @@ class ActualGame(Screen):
                 if self.interface.get_lives_value() == 0:
                     pyglet.clock.unschedule(self.update_score)
                     self.old_paper.visible = True
+                    for obj in self.f_map.return_exitgate():
+                        if obj.scale < 1:
+                            self.lock_exit_gate()
                     self.document = pyglet.text.document.FormattedDocument("Total score: " + 
                                                                            str(self.game.load()[0] + 
                                                                                self.game.load()[1]))
@@ -399,6 +402,9 @@ class ActualGame(Screen):
                 if self.interface.get_lives_value() == 0:
                     pyglet.clock.unschedule(self.update_score)
                     self.old_paper.visible = True
+                    for obj in self.f_map.return_exitgate():
+                        if obj.scale < 1:
+                            self.lock_exit_gate()
                     self.document = pyglet.text.document.FormattedDocument("Total score: " + 
                                                                            str(self.game.load()[0] + 
                                                                                self.game.load()[1]))
