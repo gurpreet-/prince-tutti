@@ -96,7 +96,8 @@ class ActualGame(Screen):
         self.starting_playery = 480
         self.player = player.Player(68, 480, self.tile_batch, self.fg_group, self.indy)
         # Creates an AI mummy
-        self.mummy = player.Mummy(200, 620, self.tile_batch, self.fg_group, img = pyglet.image.load("res/images/mummy.png"))
+        self.mummy = player.Mummy(200, 620, self.tile_batch, self.fg_group, img=pyglet.image.load("res/images/mummy.png"))
+        self.mummy2 = player.Mummy(288, 105, self.tile_batch, self.fg_group, img=pyglet.image.load("res/images/mummy.png"))
         
         # Useful for collision detection
         self.lights = []
@@ -105,9 +106,11 @@ class ActualGame(Screen):
         self.time = 0
         pyglet.clock.schedule_interval(self.detect, 1/2.0)
         pyglet.clock.schedule_interval(self.gen_rects_player, 1/60.0)
-        pyglet.clock.schedule_interval(self.gen_rects_mummys, 1/60.0)
+        pyglet.clock.schedule_interval(self.gen_rects_mummy, 1/10.0)
+        pyglet.clock.schedule_interval(self.gen_rects_mummy2, 1/10.0)
         pyglet.clock.schedule_interval(self.collision, 1/60.0)
-        pyglet.clock.schedule_interval(self.collision_mummy, 1/60.0)
+        pyglet.clock.schedule_interval(self.collision_mummy, 1/10.0)
+        pyglet.clock.schedule_interval(self.collision_mummy2, 1/10.0)
         pyglet.clock.schedule_interval(self.collision_with_mummy, 1/60.0)
         pyglet.clock.schedule_interval(self.collision_coins, 1/15.0)
         pyglet.clock.schedule_interval(self.collision_key, 1/15.0)
@@ -121,6 +124,7 @@ class ActualGame(Screen):
         self.circle = pyglet.resource.image("spot1.png")
         self.volume_num = 1
         self.on_next_level = False
+        self.ample = 0
         self.unlock()
         
     def gen_rects_player(self, dt):
@@ -145,9 +149,9 @@ class ActualGame(Screen):
                           self.player.the_player.x + self.center_x2, 
                           self.player.the_player.y + 5)
 
-    def gen_rects_mummys(self, dt):
-        self.center_y1 = self.mummy.the_mummy.height/2 - 1
-        self.center_y2 = self.mummy.the_mummy.height/2 + 1
+    def gen_rects_mummy(self, dt):
+        self.center_y1 = self.mummy.the_mummy.height/2 - 6
+        self.center_y2 = self.mummy.the_mummy.height/2 + 6
         self.rectml = Rect(self.mummy.the_mummy.x - 6, 
                           self.mummy.the_mummy.y + self.center_y1, 
                           self.mummy.the_mummy.x + 4, 
@@ -156,8 +160,8 @@ class ActualGame(Screen):
                           self.mummy.the_mummy.y + self.center_y1, 
                           self.mummy.the_mummy.x + self.mummy.the_mummy.width + 4, 
                           self.mummy.the_mummy.y + self.center_y2)
-        self.center_x1 = self.mummy.the_mummy.width/2 - 1
-        self.center_x2 = self.mummy.the_mummy.width/2 + 1
+        self.center_x1 = self.mummy.the_mummy.width/2 - 6
+        self.center_x2 = self.mummy.the_mummy.width/2 + 6
         self.rectmu = Rect(self.mummy.the_mummy.x + self.center_x1, 
                           self.mummy.the_mummy.y + self.mummy.the_mummy.height + 1, 
                           self.mummy.the_mummy.x + self.center_x2, 
@@ -166,6 +170,27 @@ class ActualGame(Screen):
                           self.mummy.the_mummy.y - 1, 
                           self.mummy.the_mummy.x + self.center_x2, 
                           self.mummy.the_mummy.y + 5)
+    def gen_rects_mummy2(self, dt):
+        self.center_y1 = self.mummy2.the_mummy.height/2 - 6
+        self.center_y2 = self.mummy2.the_mummy.height/2 + 6
+        self.rectm2l = Rect(self.mummy2.the_mummy.x - 6, 
+                          self.mummy2.the_mummy.y + self.center_y1, 
+                          self.mummy2.the_mummy.x + 4, 
+                          self.mummy2.the_mummy.y + self.center_y2)
+        self.rectm2r = Rect(self.mummy2.the_mummy.x + self.mummy2.the_mummy.width + 6, 
+                          self.mummy2.the_mummy.y + self.center_y1, 
+                          self.mummy2.the_mummy.x + self.mummy2.the_mummy.width + 4, 
+                          self.mummy2.the_mummy.y + self.center_y2)
+        self.center_x1 = self.mummy2.the_mummy.width/2 - 6
+        self.center_x2 = self.mummy2.the_mummy.width/2 + 6
+        self.rectm2u = Rect(self.mummy2.the_mummy.x + self.center_x1, 
+                          self.mummy2.the_mummy.y + self.mummy2.the_mummy.height + 1, 
+                          self.mummy2.the_mummy.x + self.center_x2, 
+                          self.mummy2.the_mummy.y + self.mummy2.the_mummy.height + 5)
+        self.rectm2d = Rect(self.mummy2.the_mummy.x + self.center_x1, 
+                          self.mummy2.the_mummy.y - 1, 
+                          self.mummy2.the_mummy.x + self.center_x2, 
+                          self.mummy2.the_mummy.y + 5)
         
     def make_light(self, dt):
         for torch in self.f_map.return_torches():
@@ -237,23 +262,86 @@ class ActualGame(Screen):
              
             if get_rect(rectangles).collides(self.rectd):
                 self.player.no_down()
-
+        #print(self.player.the_player.x, self.player.the_player.y)
     # Get what the mummies collide with       
     def collision_mummy(self, dt):
-        pass
-#         self.mummy.allow_bools()
-#         for rectangles in self.f_map.return_sprites():
-#             if get_rect(rectangles).collides(self.rectml) or self.mummy.going_left:
-#                 self.mummy.no_left()
-# 
-#             if get_rect(rectangles).collides(self.rectmr):
-#                 self.mummy.no_right()
-#              
-#             if get_rect(rectangles).collides(self.rectmu):
-#                 self.mummy.no_up()
-#              
-#             if get_rect(rectangles).collides(self.rectmd):
-#                 self.mummy.no_down()
+        self.mummy.allow_bools()
+        for rectangles in self.f_map.return_sprites():
+            if get_rect(rectangles).collides(self.rectml):
+                self.mummy.no_left()
+ 
+            if get_rect(rectangles).collides(self.rectmr):
+                self.mummy.no_right()
+              
+            if get_rect(rectangles).collides(self.rectmu):
+                self.mummy.no_up()
+              
+            if get_rect(rectangles).collides(self.rectmd):
+                self.mummy.no_down()
+        
+        if self.mummy.allowed_up and self.mummy.going_up:
+            self.mummy.move_mummy_up(dt)
+            self.mummy.going_up = True
+        elif self.mummy.allowed_right and self.mummy.going_right:
+            self.mummy.move_mummy_right(dt)
+            self.mummy.going_right = True
+        elif self.mummy.allowed_down and self.mummy.going_down:
+            self.mummy.move_mummy_down(dt)
+            self.mummy.going_down = True
+        elif self.mummy.allowed_left and self.mummy.going_left:
+            self.mummy.move_mummy_left(dt)
+            self.mummy.going_left = True
+            
+        if not self.mummy.is_moving(dt):
+            self.randint = randint(0, 4)
+            if self.randint == 0:
+                self.mummy.move_left()
+            elif self.randint == 1:
+                self.mummy.move_up()
+            elif self.randint == 2:
+                self.mummy.move_down()
+            elif self.randint == 3:
+                self.mummy.move_right()
+            
+    def collision_mummy2(self, dt):
+        self.mummy2.allow_bools()
+        for rectangles in self.f_map.return_sprites():
+            if get_rect(rectangles).collides(self.rectm2l):
+                self.mummy2.no_left()
+ 
+            if get_rect(rectangles).collides(self.rectm2r):
+                self.mummy2.no_right()
+              
+            if get_rect(rectangles).collides(self.rectm2u):
+                self.mummy2.no_up()
+              
+            if get_rect(rectangles).collides(self.rectm2d):
+                self.mummy2.no_down()
+        
+        if self.mummy2.allowed_up and self.mummy2.going_up:
+            self.mummy2.move_mummy_up(dt)
+            self.mummy2.going_up = True
+        elif self.mummy2.allowed_right and self.mummy2.going_right:
+            self.mummy2.move_mummy_right(dt)
+            self.mummy2.going_right = True
+        elif self.mummy2.allowed_down and self.mummy2.going_down:
+            self.mummy2.move_mummy_down(dt)
+            self.mummy2.going_down = True
+        elif self.mummy2.allowed_left and self.mummy2.going_left:
+            self.mummy2.move_mummy_left(dt)
+            self.mummy2.going_left = True
+
+        if not self.mummy2.is_moving(dt):
+            self.randint = randint(0, 4)
+            if self.randint == 0:
+                self.mummy2.move_left()
+            elif self.randint == 1:
+                self.mummy2.move_up()
+            elif self.randint == 2:
+                self.mummy2.move_down()
+            elif self.randint == 3:
+                self.mummy2.move_right()
+
 
     # Does the player collide with coins?
     def collision_coins(self, dt):
@@ -269,6 +357,8 @@ class ActualGame(Screen):
             if get_rect(key).collides(get_rect(self.player.the_player)):
                 if key.visible == True:
                     self.interface.gotthe_key_scroll()
+                    self.mummy.speed_up()
+                    self.mummy2.speed_up()
                     pyglet.clock.schedule_once(self.unlock_exit_gate, 0.1)
                     pyglet.clock.schedule_interval(self.volume_decrease, 1/10)
                     key.visible = False
