@@ -16,7 +16,7 @@
 [   t                                    ]
 [  4 6     b 6     bb4bbcbbb 6     b b b4]
 [                                       e]
-[ 6       b1  1  ww 1   1  4b b6     bbb]
+[ 6       b1  1  ww 1   1  4b b6     bbbb]
 [                    1                  b]
 [  b 6     b b 1   6      b wwcbb b b bbb]
 [             4                         b]
