@@ -104,14 +104,15 @@ class ActualGame(Screen):
         self.rectang = []
         
         self.time = 0
-        pyglet.clock.schedule_interval(self.detect, 1/2.0)
+        pyglet.clock.schedule_interval(self.detect, 1/4.0)
         pyglet.clock.schedule_interval(self.gen_rects_player, 1/60.0)
         pyglet.clock.schedule_interval(self.gen_rects_mummy, 1/10.0)
         pyglet.clock.schedule_interval(self.gen_rects_mummy2, 1/10.0)
         pyglet.clock.schedule_interval(self.collision, 1/60.0)
         pyglet.clock.schedule_interval(self.collision_mummy, 1/10.0)
         pyglet.clock.schedule_interval(self.collision_mummy2, 1/10.0)
-        pyglet.clock.schedule_interval(self.collision_with_mummy, 1/60.0)
+        pyglet.clock.schedule_interval(self.collision_with_mummy, 1/30.0)
+        pyglet.clock.schedule_interval(self.collision_with_mummy2, 1/30.0)
         pyglet.clock.schedule_interval(self.collision_coins, 1/15.0)
         pyglet.clock.schedule_interval(self.collision_key, 1/15.0)
         pyglet.clock.schedule_interval(self.update_score, 2.0)
@@ -367,6 +368,33 @@ class ActualGame(Screen):
     # reset the screen. Lose a life
     def collision_with_mummy(self, dt):
         if get_rect(self.mummy.the_mummy).collides(get_rect(self.player.the_player)):
+                self.interface.lost_life()
+                if self.interface.get_lives_value() == 0:
+                    pyglet.clock.unschedule(self.update_score)
+                    self.old_paper.visible = True
+                    self.document = pyglet.text.document.FormattedDocument("Total score: " + 
+                                                                           str(self.game.load()[0] + 
+                                                                               self.game.load()[1]))
+                    self.document.set_style(0, len(self.document.text),
+                                            dict(color=(0, 0, 0, 255)))
+                    self.document.set_paragraph_style(0, len(self.document.text), dict(align=("center")))
+                    
+                     
+                     
+                    self.layout = pyglet.text.layout.IncrementalTextLayout(self.document,
+                                                                            300,
+                                                                            200,
+                                                                            multiline=True,
+                                                                            batch=self.interface_batch,
+                                                                            group=self.text_group2)
+                    self.layout.x = WINDOW_SIZE_X/3
+                    self.layout.y = WINDOW_SIZE_Y/4
+                    self.game.save(0, 0)
+                elif self.interface.get_lives_value() > 0:
+                    self.reset_all()
+
+    def collision_with_mummy2(self, dt):
+        if get_rect(self.mummy2.the_mummy).collides(get_rect(self.player.the_player)):
                 self.interface.lost_life()
                 if self.interface.get_lives_value() == 0:
                     pyglet.clock.unschedule(self.update_score)

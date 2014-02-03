@@ -18,7 +18,7 @@ class Interface:
         self.spacing = 1
 
         self.logo_image = pyglet.image.load("res/images/logo.png")
-        self.logo = pyglet.sprite.Sprite(img=self.logo_image, x=self.spacing,
+        self.logo = pyglet.sprite.Sprite(img=self.logo_image, x=self.spacing+20,
                                      y=WINDOW_SIZE_Y/1.17, batch=self.batch,
                                      group=self.group_images)
             
