@@ -83,21 +83,19 @@ class ActualGame(Screen):
         self.soundplayer = pyglet.media.ManagedSoundPlayer() # Load the sound player
         self.soundplayer.push_handlers(on_eos=self.on_eos)
         self.source = pyglet.media.StreamingSource() # Load the streaming device source
-        self.audio_path = "res/music/scare.mp3" # First queue the bonus music
-        self.load_media = pyglet.media.load(self.audio_path)
+       # self.audio_path = "res/music/scare.mp3" # First queue the bonus music
+       # self.load_media = pyglet.media.load(self.audio_path)
         self.on_to_next = False
-        self.soundplayer.queue(self.load_media)
-        self.soundplayer.queue(pyglet.media.load("res/music/main.mp3")) # Then the main music
-        self.soundplayer.play()
+       # self.soundplayer.queue(self.load_media)
+       # self.soundplayer.queue(pyglet.media.load("res/music/main.mp3")) # Then the main music
+       # self.soundplayer.play()
 
         # Create the actual player who plays in the game
         self.indy = pyglet.image.load('res/images/indy/man.png')
-        self.starting_playerx = 68
-        self.starting_playery = 480
+        self.start_player = [68, 480]
         self.player = player.Player(68, 480, self.tile_batch, self.fg_group, self.indy)
         # Creates an AI mummy
-        self.mummy = player.Mummy(200, 620, self.tile_batch, self.fg_group, img=pyglet.image.load("res/images/mummy.png"))
-        self.mummy2 = player.Mummy(288, 105, self.tile_batch, self.fg_group, img=pyglet.image.load("res/images/mummy.png"))
+        self.mummy = []
         
         # Useful for collision detection
         self.lights = []
@@ -107,12 +105,12 @@ class ActualGame(Screen):
         pyglet.clock.schedule_interval(self.detect, 1/4.0)
         pyglet.clock.schedule_interval(self.gen_rects_player, 1/60.0)
         pyglet.clock.schedule_interval(self.gen_rects_mummy, 1/10.0)
-        pyglet.clock.schedule_interval(self.gen_rects_mummy2, 1/10.0)
+        #pyglet.clock.schedule_interval(self.gen_rects_mummy2, 1/10.0)
         pyglet.clock.schedule_interval(self.collision, 1/60.0)
         pyglet.clock.schedule_interval(self.collision_mummy, 1/10.0)
-        pyglet.clock.schedule_interval(self.collision_mummy2, 1/10.0)
+        #pyglet.clock.schedule_interval(self.collision_mummy2, 1/10.0)
         pyglet.clock.schedule_interval(self.collision_with_mummy, 1/30.0)
-        pyglet.clock.schedule_interval(self.collision_with_mummy2, 1/30.0)
+        #pyglet.clock.schedule_interval(self.collision_with_mummy2, 1/30.0)
         pyglet.clock.schedule_interval(self.collision_coins, 1/15.0)
         pyglet.clock.schedule_interval(self.collision_key, 1/15.0)
         pyglet.clock.schedule_interval(self.update_score, 2.0)
@@ -122,10 +120,34 @@ class ActualGame(Screen):
         self.rectr = 0
         self.rectu = 0
         self.rectd = 0
+        self.rectml = 0
+        self.rectmr = 0
+        self.rectmu = 0
+        self.rectmd = 0
+        self.rectm2l = 0
+        self.rectm2r = 0
+        self.rectm2u = 0
+        self.rectm2d = 0
+        self.rectm3l = 0
+        self.rectm3r = 0
+        self.rectm3u = 0
+        self.rectm3d = 0
+        self.rectm4l = 0
+        self.rectm4r = 0
+        self.rectm4u = 0
+        self.rectm4d = 0
+        self.rectm5l = 0
+        self.rectm5r = 0
+        self.rectm5u = 0
+        self.rectm5d = 0
+        self.startm1 = [200, 6200]
+        self.startm2 = [288, 105]
+        self.startm3 = [1211, 423]
+        self.startm4 = [230, 740]
+        self.startm5 = [665, 231]
         self.circle = pyglet.resource.image("spot1.png")
         self.volume_num = 1
         self.on_next_level = False
-        self.ample = 0
         self.unlock()
         
     def gen_rects_player(self, dt):
@@ -151,48 +173,113 @@ class ActualGame(Screen):
                           self.player.the_player.y + 5)
 
     def gen_rects_mummy(self, dt):
-        self.center_y1 = self.mummy.the_mummy.height/2 - 6
-        self.center_y2 = self.mummy.the_mummy.height/2 + 6
-        self.rectml = Rect(self.mummy.the_mummy.x - 6, 
-                          self.mummy.the_mummy.y + self.center_y1, 
-                          self.mummy.the_mummy.x + 4, 
-                          self.mummy.the_mummy.y + self.center_y2)
-        self.rectmr = Rect(self.mummy.the_mummy.x + self.mummy.the_mummy.width + 6, 
-                          self.mummy.the_mummy.y + self.center_y1, 
-                          self.mummy.the_mummy.x + self.mummy.the_mummy.width + 4, 
-                          self.mummy.the_mummy.y + self.center_y2)
-        self.center_x1 = self.mummy.the_mummy.width/2 - 6
-        self.center_x2 = self.mummy.the_mummy.width/2 + 6
-        self.rectmu = Rect(self.mummy.the_mummy.x + self.center_x1, 
-                          self.mummy.the_mummy.y + self.mummy.the_mummy.height + 1, 
-                          self.mummy.the_mummy.x + self.center_x2, 
-                          self.mummy.the_mummy.y + self.mummy.the_mummy.height + 5)
-        self.rectmd = Rect(self.mummy.the_mummy.x + self.center_x1, 
-                          self.mummy.the_mummy.y - 1, 
-                          self.mummy.the_mummy.x + self.center_x2, 
-                          self.mummy.the_mummy.y + 5)
-    def gen_rects_mummy2(self, dt):
-        self.center_y1 = self.mummy2.the_mummy.height/2 - 6
-        self.center_y2 = self.mummy2.the_mummy.height/2 + 6
-        self.rectm2l = Rect(self.mummy2.the_mummy.x - 6, 
-                          self.mummy2.the_mummy.y + self.center_y1, 
-                          self.mummy2.the_mummy.x + 4, 
-                          self.mummy2.the_mummy.y + self.center_y2)
-        self.rectm2r = Rect(self.mummy2.the_mummy.x + self.mummy2.the_mummy.width + 6, 
-                          self.mummy2.the_mummy.y + self.center_y1, 
-                          self.mummy2.the_mummy.x + self.mummy2.the_mummy.width + 4, 
-                          self.mummy2.the_mummy.y + self.center_y2)
-        self.center_x1 = self.mummy2.the_mummy.width/2 - 6
-        self.center_x2 = self.mummy2.the_mummy.width/2 + 6
-        self.rectm2u = Rect(self.mummy2.the_mummy.x + self.center_x1, 
-                          self.mummy2.the_mummy.y + self.mummy2.the_mummy.height + 1, 
-                          self.mummy2.the_mummy.x + self.center_x2, 
-                          self.mummy2.the_mummy.y + self.mummy2.the_mummy.height + 5)
-        self.rectm2d = Rect(self.mummy2.the_mummy.x + self.center_x1, 
-                          self.mummy2.the_mummy.y - 1, 
-                          self.mummy2.the_mummy.x + self.center_x2, 
-                          self.mummy2.the_mummy.y + 5)
-        
+        for mummy in self.mummy:
+            if mummy == self.mummy1:
+                self.center_y1 = mummy.the_mummy.height/2 - 6
+                self.center_y2 = mummy.the_mummy.height/2 + 6
+                self.rectml = Rect(mummy.the_mummy.x - 6, 
+                                  mummy.the_mummy.y + self.center_y1, 
+                                  mummy.the_mummy.x + 4, 
+                                  mummy.the_mummy.y + self.center_y2)
+                self.rectmr = Rect(mummy.the_mummy.x + mummy.the_mummy.width + 6, 
+                                  mummy.the_mummy.y + self.center_y1, 
+                                  mummy.the_mummy.x + mummy.the_mummy.width + 4, 
+                                  mummy.the_mummy.y + self.center_y2)
+                self.center_x1 = mummy.the_mummy.width/2 - 6
+                self.center_x2 = mummy.the_mummy.width/2 + 6
+                self.rectmu = Rect(mummy.the_mummy.x + self.center_x1, 
+                                  mummy.the_mummy.y + mummy.the_mummy.height + 1, 
+                                  mummy.the_mummy.x + self.center_x2, 
+                                  mummy.the_mummy.y + mummy.the_mummy.height + 5)
+                self.rectmd = Rect(mummy.the_mummy.x + self.center_x1, 
+                                  mummy.the_mummy.y - 1, 
+                                  mummy.the_mummy.x + self.center_x2, 
+                                  mummy.the_mummy.y + 5)
+            elif mummy == self.mummy2:
+                self.center_y1 = mummy.the_mummy.height/2 - 6
+                self.center_y2 = mummy.the_mummy.height/2 + 6
+                self.rectm2l = Rect(mummy.the_mummy.x - 6, 
+                                  mummy.the_mummy.y + self.center_y1, 
+                                  mummy.the_mummy.x + 4, 
+                                  mummy.the_mummy.y + self.center_y2)
+                self.rectm2r = Rect(mummy.the_mummy.x + mummy.the_mummy.width + 6, 
+                                  mummy.the_mummy.y + self.center_y1, 
+                                  mummy.the_mummy.x + mummy.the_mummy.width + 4, 
+                                  mummy.the_mummy.y + self.center_y2)
+                self.center_x1 = mummy.the_mummy.width/2 - 6
+                self.center_x2 = mummy.the_mummy.width/2 + 6
+                self.rectm2u = Rect(mummy.the_mummy.x + self.center_x1, 
+                                  mummy.the_mummy.y + mummy.the_mummy.height + 1, 
+                                  mummy.the_mummy.x + self.center_x2, 
+                                  mummy.the_mummy.y + mummy.the_mummy.height + 5)
+                self.rectm2d = Rect(mummy.the_mummy.x + self.center_x1, 
+                                  mummy.the_mummy.y - 1, 
+                                  mummy.the_mummy.x + self.center_x2, 
+                                  mummy.the_mummy.y + 5)
+            elif mummy == self.mummy3:
+                self.center_y1 = mummy.the_mummy.height/2 - 6
+                self.center_y2 = mummy.the_mummy.height/2 + 6
+                self.rectm3l = Rect(mummy.the_mummy.x - 6, 
+                                  mummy.the_mummy.y + self.center_y1, 
+                                  mummy.the_mummy.x + 4, 
+                                  mummy.the_mummy.y + self.center_y2)
+                self.rectm3r = Rect(mummy.the_mummy.x + mummy.the_mummy.width + 6, 
+                                  mummy.the_mummy.y + self.center_y1, 
+                                  mummy.the_mummy.x + mummy.the_mummy.width + 4, 
+                                  mummy.the_mummy.y + self.center_y2)
+                self.center_x1 = mummy.the_mummy.width/2 - 6
+                self.center_x2 = mummy.the_mummy.width/2 + 6
+                self.rectm3u = Rect(mummy.the_mummy.x + self.center_x1, 
+                                  mummy.the_mummy.y + mummy.the_mummy.height + 1, 
+                                  mummy.the_mummy.x + self.center_x2, 
+                                  mummy.the_mummy.y + mummy.the_mummy.height + 5)
+                self.rectm3d = Rect(mummy.the_mummy.x + self.center_x1, 
+                                  mummy.the_mummy.y - 1, 
+                                  mummy.the_mummy.x + self.center_x2, 
+                                  mummy.the_mummy.y + 5)
+            elif mummy == self.mummy4:
+                self.center_y1 = mummy.the_mummy.height/2 - 6
+                self.center_y2 = mummy.the_mummy.height/2 + 6
+                self.rectm4l = Rect(mummy.the_mummy.x - 6, 
+                                  mummy.the_mummy.y + self.center_y1, 
+                                  mummy.the_mummy.x + 4, 
+                                  mummy.the_mummy.y + self.center_y2)
+                self.rectm4r = Rect(mummy.the_mummy.x + mummy.the_mummy.width + 6, 
+                                  mummy.the_mummy.y + self.center_y1, 
+                                  mummy.the_mummy.x + mummy.the_mummy.width + 4, 
+                                  mummy.the_mummy.y + self.center_y2)
+                self.center_x1 = mummy.the_mummy.width/2 - 6
+                self.center_x2 = mummy.the_mummy.width/2 + 6
+                self.rectm4u = Rect(mummy.the_mummy.x + self.center_x1, 
+                                  mummy.the_mummy.y + mummy.the_mummy.height + 1, 
+                                  mummy.the_mummy.x + self.center_x2, 
+                                  mummy.the_mummy.y + mummy.the_mummy.height + 5)
+                self.rectm4d = Rect(mummy.the_mummy.x + self.center_x1, 
+                                  mummy.the_mummy.y - 1, 
+                                  mummy.the_mummy.x + self.center_x2, 
+                                  mummy.the_mummy.y + 5)
+            elif mummy == self.mummy5:
+                self.center_y1 = mummy.the_mummy.height/2 - 6
+                self.center_y2 = mummy.the_mummy.height/2 + 6
+                self.rectm5l = Rect(mummy.the_mummy.x - 6, 
+                                  mummy.the_mummy.y + self.center_y1, 
+                                  mummy.the_mummy.x + 4, 
+                                  mummy.the_mummy.y + self.center_y2)
+                self.rectm5r = Rect(mummy.the_mummy.x + mummy.the_mummy.width + 6, 
+                                  mummy.the_mummy.y + self.center_y1, 
+                                  mummy.the_mummy.x + mummy.the_mummy.width + 4, 
+                                  mummy.the_mummy.y + self.center_y2)
+                self.center_x1 = mummy.the_mummy.width/2 - 6
+                self.center_x2 = mummy.the_mummy.width/2 + 6
+                self.rectm5u = Rect(mummy.the_mummy.x + self.center_x1, 
+                                  mummy.the_mummy.y + mummy.the_mummy.height + 1, 
+                                  mummy.the_mummy.x + self.center_x2, 
+                                  mummy.the_mummy.y + mummy.the_mummy.height + 5)
+                self.rectm5d = Rect(mummy.the_mummy.x + self.center_x1, 
+                                  mummy.the_mummy.y - 1, 
+                                  mummy.the_mummy.x + self.center_x2, 
+                                  mummy.the_mummy.y + 5)
+                
     def make_light(self, dt):
         for torch in self.f_map.return_torches():
             self.torch_sprite = pyglet.sprite.Sprite(self.circle, x=torch.x-10,
@@ -247,6 +334,7 @@ class ActualGame(Screen):
                 sprite.opacity += 1
             if self.time < 50 and sprite.opacity > 20:
                 sprite.opacity -= 1
+        #print(self.player.the_player.x, self.player.the_player.y)
                 
     # Get what the player collides with
     def collision(self, dt):
@@ -263,85 +351,96 @@ class ActualGame(Screen):
              
             if get_rect(rectangles).collides(self.rectd):
                 self.player.no_down()
-        #print(self.player.the_player.x, self.player.the_player.y)
+                
     # Get what the mummies collide with       
     def collision_mummy(self, dt):
-        self.mummy.allow_bools()
-        for rectangles in self.f_map.return_sprites():
-            if get_rect(rectangles).collides(self.rectml):
-                self.mummy.no_left()
- 
-            if get_rect(rectangles).collides(self.rectmr):
-                self.mummy.no_right()
-              
-            if get_rect(rectangles).collides(self.rectmu):
-                self.mummy.no_up()
-              
-            if get_rect(rectangles).collides(self.rectmd):
-                self.mummy.no_down()
-        
-        if self.mummy.allowed_up and self.mummy.going_up:
-            self.mummy.move_mummy_up(dt)
-            self.mummy.going_up = True
-        elif self.mummy.allowed_right and self.mummy.going_right:
-            self.mummy.move_mummy_right(dt)
-            self.mummy.going_right = True
-        elif self.mummy.allowed_down and self.mummy.going_down:
-            self.mummy.move_mummy_down(dt)
-            self.mummy.going_down = True
-        elif self.mummy.allowed_left and self.mummy.going_left:
-            self.mummy.move_mummy_left(dt)
-            self.mummy.going_left = True
+        for mummy in self.mummy:
+            mummy.allow_bools()
+            for rectangles in self.f_map.return_sprites():
+                if mummy == self.mummy1:
+                    if get_rect(rectangles).collides(self.rectml):
+                        mummy.no_left()
+                
+                    if get_rect(rectangles).collides(self.rectmr):
+                        mummy.no_right()
+                      
+                    if get_rect(rectangles).collides(self.rectmu):
+                        mummy.no_up()
+                      
+                    if get_rect(rectangles).collides(self.rectmd):
+                        mummy.no_down()
+                elif mummy == self.mummy2:
+                    if get_rect(rectangles).collides(self.rectm2l):
+                        mummy.no_left()
+                
+                    if get_rect(rectangles).collides(self.rectm2r):
+                        mummy.no_right()
+                      
+                    if get_rect(rectangles).collides(self.rectm2u):
+                        mummy.no_up()
+                      
+                    if get_rect(rectangles).collides(self.rectm2d):
+                        mummy.no_down()
+                elif mummy == self.mummy3:
+                    if get_rect(rectangles).collides(self.rectm3l):
+                        mummy.no_left()
+                
+                    if get_rect(rectangles).collides(self.rectm3r):
+                        mummy.no_right()
+                      
+                    if get_rect(rectangles).collides(self.rectm3u):
+                        mummy.no_up()
+                      
+                    if get_rect(rectangles).collides(self.rectm3d):
+                        mummy.no_down()
+                elif mummy == self.mummy4:
+                    if get_rect(rectangles).collides(self.rectm4l):
+                        mummy.no_left()
+                
+                    if get_rect(rectangles).collides(self.rectm4r):
+                        mummy.no_right()
+                      
+                    if get_rect(rectangles).collides(self.rectm4u):
+                        mummy.no_up()
+                      
+                    if get_rect(rectangles).collides(self.rectm4d):
+                        mummy.no_down()
+                elif mummy == self.mummy5:
+                    if get_rect(rectangles).collides(self.rectm5l):
+                        mummy.no_left()
+                
+                    if get_rect(rectangles).collides(self.rectm5r):
+                        mummy.no_right()
+                      
+                    if get_rect(rectangles).collides(self.rectm5u):
+                        mummy.no_up()
+                      
+                    if get_rect(rectangles).collides(self.rectm5d):
+                        mummy.no_down()
             
-        if not self.mummy.is_moving(dt):
-            self.randint = randint(0, 4)
-            if self.randint == 0:
-                self.mummy.move_left()
-            elif self.randint == 1:
-                self.mummy.move_up()
-            elif self.randint == 2:
-                self.mummy.move_down()
-            elif self.randint == 3:
-                self.mummy.move_right()
-            
-    def collision_mummy2(self, dt):
-        self.mummy2.allow_bools()
-        for rectangles in self.f_map.return_sprites():
-            if get_rect(rectangles).collides(self.rectm2l):
-                self.mummy2.no_left()
- 
-            if get_rect(rectangles).collides(self.rectm2r):
-                self.mummy2.no_right()
-              
-            if get_rect(rectangles).collides(self.rectm2u):
-                self.mummy2.no_up()
-              
-            if get_rect(rectangles).collides(self.rectm2d):
-                self.mummy2.no_down()
-        
-        if self.mummy2.allowed_up and self.mummy2.going_up:
-            self.mummy2.move_mummy_up(dt)
-            self.mummy2.going_up = True
-        elif self.mummy2.allowed_right and self.mummy2.going_right:
-            self.mummy2.move_mummy_right(dt)
-            self.mummy2.going_right = True
-        elif self.mummy2.allowed_down and self.mummy2.going_down:
-            self.mummy2.move_mummy_down(dt)
-            self.mummy2.going_down = True
-        elif self.mummy2.allowed_left and self.mummy2.going_left:
-            self.mummy2.move_mummy_left(dt)
-            self.mummy2.going_left = True
-
-        if not self.mummy2.is_moving(dt):
-            self.randint = randint(0, 4)
-            if self.randint == 0:
-                self.mummy2.move_left()
-            elif self.randint == 1:
-                self.mummy2.move_up()
-            elif self.randint == 2:
-                self.mummy2.move_down()
-            elif self.randint == 3:
-                self.mummy2.move_right()
+            if mummy.allowed_up and mummy.going_up:
+                mummy.move_mummy_up(dt)
+                mummy.going_up = True
+            elif mummy.allowed_right and mummy.going_right:
+                mummy.move_mummy_right(dt)
+                mummy.going_right = True
+            elif mummy.allowed_down and mummy.going_down:
+                mummy.move_mummy_down(dt)
+                mummy.going_down = True
+            elif mummy.allowed_left and mummy.going_left:
+                mummy.move_mummy_left(dt)
+                mummy.going_left = True
+                
+            if not mummy.is_moving(dt):
+                self.randint = randint(0, 4)
+                if self.randint == 0 and mummy.allowed_left:
+                    mummy.move_left()
+                elif self.randint == 1 and mummy.allowed_up:
+                    mummy.move_up()
+                elif self.randint == 2 and mummy.allowed_down:
+                    mummy.move_down()
+                elif self.randint == 3 and mummy.allowed_right:
+                    mummy.move_right()
 
 
     # Does the player collide with coins?
@@ -358,8 +457,8 @@ class ActualGame(Screen):
             if get_rect(key).collides(get_rect(self.player.the_player)):
                 if key.visible == True:
                     self.interface.gotthe_key_scroll()
-                    self.mummy.speed_up()
-                    self.mummy2.speed_up()
+                    for mummy in self.mummy:
+                        mummy.speed_up()
                     pyglet.clock.schedule_once(self.unlock_exit_gate, 0.1)
                     pyglet.clock.schedule_interval(self.volume_decrease, 1/10)
                     key.visible = False
@@ -367,69 +466,52 @@ class ActualGame(Screen):
     # If the player collides with a mummy
     # reset the screen. Lose a life
     def collision_with_mummy(self, dt):
-        if get_rect(self.mummy.the_mummy).collides(get_rect(self.player.the_player)):
-                self.interface.lost_life()
-                if self.interface.get_lives_value() == 0:
-                    pyglet.clock.unschedule(self.update_score)
-                    self.old_paper.visible = True
-                    for obj in self.f_map.return_exitgate():
-                        if obj.scale < 1:
-                            self.lock_exit_gate()
-                    self.document = pyglet.text.document.FormattedDocument("Total score: " + 
-                                                                           str(self.game.load()[0] + 
-                                                                               self.game.load()[1]))
-                    self.document.set_style(0, len(self.document.text),
-                                            dict(color=(0, 0, 0, 255)))
-                    self.document.set_paragraph_style(0, len(self.document.text), dict(align=("center")))
-                    
-                     
-                     
-                    self.layout = pyglet.text.layout.IncrementalTextLayout(self.document,
-                                                                            300,
-                                                                            200,
-                                                                            multiline=True,
-                                                                            batch=self.interface_batch,
-                                                                            group=self.text_group2)
-                    self.layout.x = WINDOW_SIZE_X/3
-                    self.layout.y = WINDOW_SIZE_Y/4
-                    self.game.save(0, 0)
-                elif self.interface.get_lives_value() > 0:
-                    self.reset_all()
-
-    def collision_with_mummy2(self, dt):
-        if get_rect(self.mummy2.the_mummy).collides(get_rect(self.player.the_player)):
-                self.interface.lost_life()
-                if self.interface.get_lives_value() == 0:
-                    pyglet.clock.unschedule(self.update_score)
-                    self.old_paper.visible = True
-                    for obj in self.f_map.return_exitgate():
-                        if obj.scale < 1:
-                            self.lock_exit_gate()
-                    self.document = pyglet.text.document.FormattedDocument("Total score: " + 
-                                                                           str(self.game.load()[0] + 
-                                                                               self.game.load()[1]))
-                    self.document.set_style(0, len(self.document.text),
-                                            dict(color=(0, 0, 0, 255)))
-                    self.document.set_paragraph_style(0, len(self.document.text), dict(align=("center")))
-                    
-                     
-                     
-                    self.layout = pyglet.text.layout.IncrementalTextLayout(self.document,
-                                                                            300,
-                                                                            200,
-                                                                            multiline=True,
-                                                                            batch=self.interface_batch,
-                                                                            group=self.text_group2)
-                    self.layout.x = WINDOW_SIZE_X/3
-                    self.layout.y = WINDOW_SIZE_Y/4
-                    self.game.save(0, 0)
-                elif self.interface.get_lives_value() > 0:
-                    self.reset_all()
+        for mummy in self.mummy:
+            if get_rect(mummy.the_mummy).collides(get_rect(self.player.the_player)):
+                    self.interface.lost_life()
+                    if self.interface.get_lives_value() == 0:
+                        pyglet.clock.unschedule(self.update_score)
+                        self.old_paper.visible = True
+                        for obj in self.f_map.return_exitgate():
+                            if obj.scale < 1:
+                                self.lock_exit_gate()
+                        self.document = pyglet.text.document.FormattedDocument("Total score: " + 
+                                                                               str(self.game.load()[0] + 
+                                                                                   self.game.load()[1]))
+                        self.document.set_style(0, len(self.document.text),
+                                                dict(color=(0, 0, 0, 255)))
+                        self.document.set_paragraph_style(0, len(self.document.text), dict(align=("center")))
+                        
+                         
+                         
+                        self.layout = pyglet.text.layout.IncrementalTextLayout(self.document,
+                                                                                300,
+                                                                                200,
+                                                                                multiline=True,
+                                                                                batch=self.interface_batch,
+                                                                                group=self.text_group2)
+                        self.layout.x = WINDOW_SIZE_X/3
+                        self.layout.y = WINDOW_SIZE_Y/4
+                        self.game.save(0, 0)
+                    elif self.interface.get_lives_value() > 0:
+                        self.reset_all()
 
     # Resets everything back to their normal positions      
     def reset_all(self):
-        self.player.the_player.x = self.starting_playerx
-        self.player.the_player.y = self.starting_playery
+        self.player.the_player.x = self.start_player[0]
+        self.player.the_player.y = self.start_player[1]
+        self.mummy1.the_mummy.x = self.startm1[0]
+        self.mummy1.the_mummy.y = self.startm1[1]
+        self.mummy2.the_mummy.x = self.startm2[0]
+        self.mummy2.the_mummy.y = self.startm2[1]
+        self.mummy3.the_mummy.x = self.startm3[0]
+        self.mummy3.the_mummy.y = self.startm3[1]
+        self.mummy4.the_mummy.x = self.startm4[0]
+        self.mummy4.the_mummy.y = self.startm4[1]
+        self.mummy5.the_mummy.x = self.startm5[0]
+        self.mummy5.the_mummy.y = self.startm5[1]
+        for mummy in self.mummy:
+            mummy.the_mummy.visible = False
         pyglet.clock.unschedule(self.unlock_key_gate)
         for obj in self.f_map.return_keygate():
             if obj.scale < 1:
@@ -450,9 +532,9 @@ class ActualGame(Screen):
         if self.volume_num <= 0.2:
             pyglet.clock.unschedule(self.volume_decrease)
             self.soundplayer.pause()
-            self.soundplayer.queue(pyglet.resource.media("scare.mp3"))
-            self.soundplayer.next()
-            self.soundplayer.play()
+          #  self.soundplayer.queue(pyglet.resource.media("scare.mp3"))
+          #  self.soundplayer.next()
+          #  self.soundplayer.play()
             self.on_to_next = True
             pyglet.clock.schedule_interval(self.volume_increase, 1.0)
         self.soundplayer.volume = self.volume_num
@@ -472,6 +554,12 @@ class ActualGame(Screen):
     # Unlocks the gate. Please note the actual level
     # is self.level + 1
     def unlock(self):
+        self.mummy1 = player.Mummy(200, 620, self.tile_batch, self.fg_group, img=pyglet.image.load("res/images/mummy.png"))
+        self.mummy2 = player.Mummy(288, 105, self.tile_batch, self.fg_group, img=pyglet.image.load("res/images/mummy.png"))
+        self.mummy = list(self.mummy)
+        self.mummy.append(self.mummy1)
+        self.mummy.append(self.mummy2)
+        self.mummy = set(self.mummy)
         if self.game.load():
             self.score_hold = self.game.load()
             self.interface.inject_score(self.score_hold[0])
@@ -480,10 +568,35 @@ class ActualGame(Screen):
         if self.level == 0:
             pyglet.clock.schedule_once(self.unlock_key_gate, 20.0)
         if self.level == 1:
+            self.mummy3 = player.Mummy(1211, 423, self.tile_batch, self.fg_group, img=pyglet.image.load("res/images/mummy.png"))
+            self.mummy = list(self.mummy)
+            self.mummy.append(self.mummy3)
+            self.mummy = set(self.mummy)
             pyglet.clock.schedule_once(self.unlock_key_gate, 26.0)
         if self.level == 2:
+            self.mummy3 = player.Mummy(1211, 423, self.tile_batch, self.fg_group, img=pyglet.image.load("res/images/mummy.png"))
+            self.mummy = list(self.mummy)
+            self.mummy.append(self.mummy3)
+            self.mummy = set(self.mummy)
+            self.mummy4 = player.Mummy(230, 740, self.tile_batch, self.fg_group, img=pyglet.image.load("res/images/mummy.png"))
+            self.mummy = list(self.mummy)
+            self.mummy.append(self.mummy4)
+            self.mummy = set(self.mummy)
             pyglet.clock.schedule_once(self.unlock_key_gate, 32.0)
         if self.level == 3:
+            # 665 231
+            self.mummy3 = player.Mummy(1211, 423, self.tile_batch, self.fg_group, img=pyglet.image.load("res/images/mummy.png"))
+            self.mummy = list(self.mummy)
+            self.mummy.append(self.mummy3)
+            self.mummy = set(self.mummy)
+            self.mummy4 = player.Mummy(230, 740, self.tile_batch, self.fg_group, img=pyglet.image.load("res/images/mummy.png"))
+            self.mummy = list(self.mummy)
+            self.mummy.append(self.mummy4)
+            self.mummy = set(self.mummy)
+            self.mummy5 = player.Mummy(665, 231, self.tile_batch, self.fg_group, img=pyglet.image.load("res/images/mummy.png"))
+            self.mummy = list(self.mummy)
+            self.mummy.append(self.mummy5)
+            self.mummy = set(self.mummy)
             pyglet.clock.schedule_once(self.unlock_key_gate, 40.0)
             
     # Unlock the gate if the player has not recently lost a life
@@ -491,17 +604,17 @@ class ActualGame(Screen):
         for obj in self.f_map.return_keygate():
             obj.scale = 0.99
             obj.y += 32
-            self.load_effect = pyglet.resource.media("chain_gate.mp3")
-            self.effects.queue(self.load_effect)
-            self.effects.play()
+       #     self.load_effect = pyglet.resource.media("chain_gate.mp3")
+       #     self.effects.queue(self.load_effect)
+       #     self.effects.play()
             
     def unlock_exit_gate(self, dt):
         for obj in self.f_map.return_exitgate():
             obj.scale = 0.99
             obj.y += 32
-            self.load_effect = pyglet.resource.media("chain_gate.mp3")
-            self.effects.queue(self.load_effect)
-            self.effects.play()
+          #  self.load_effect = pyglet.resource.media("chain_gate.mp3")
+          #  self.effects.queue(self.load_effect)
+          #  self.effects.play()
 
     def lock_key_gate(self):
         for obj in self.f_map.return_keygate():
@@ -564,16 +677,16 @@ class ActualGame(Screen):
                 self.game.start_current_screen()
     
     # This method is called whenever the player reaches end of source.
-    def on_eos(self):
-        self.soundplayer.pause()
-        if not self.on_to_next:
-            self.soundplayer.queue(pyglet.media.load("res/music/main.mp3"))
-            self.soundplayer.next()
-            self.soundplayer.play()
-        if self.on_to_next:
-            self.soundplayer.queue(pyglet.media.load("res/music/scare.mp3"))
-            self.soundplayer.next()
-            self.soundplayer.play()
+   # def on_eos(self):
+   #     self.soundplayer.pause()
+   #     if not self.on_to_next:
+   #         self.soundplayer.queue(pyglet.media.load("res/music/main.mp3"))
+   #         self.soundplayer.next()
+   #         self.soundplayer.play()
+   #     if self.on_to_next:
+   #         self.soundplayer.queue(pyglet.media.load("res/music/scare.mp3"))
+   #         self.soundplayer.next()
+   #         self.soundplayer.play()
         
 # This is the Main Menu screen which is loaded on game start.
 # It includes all the methods necessary for the movement of
@@ -691,10 +804,10 @@ class MainMenu(Screen):
         self.soundplayer = pyglet.media.ManagedSoundPlayer() # Load the sound player
         self.soundplayer.push_handlers(on_eos=self.on_eos)
         self.source = pyglet.media.StreamingSource() # Load the streaming device source
-        self.audio_path = "res/music/rumba.mp3" # First queue the bonus music
-        self.load_media = pyglet.media.load(self.audio_path)
-        self.soundplayer.queue(self.load_media)
-        self.soundplayer.play()
+    #    self.audio_path = "res/music/rumba.mp3" # First queue the bonus music
+    #    self.load_media = pyglet.media.load(self.audio_path)
+    #    self.soundplayer.queue(self.load_media)
+    #    self.soundplayer.play()
         self.i = 0
 
     def handle_new_game(self):
