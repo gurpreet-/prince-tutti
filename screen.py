@@ -136,10 +136,7 @@ class ActualGame(Screen):
         self.rectm4r = 0
         self.rectm4u = 0
         self.rectm4d = 0
-        self.rectm5l = 0
-        self.rectm5r = 0
-        self.rectm5u = 0
-        self.rectm5d = 0
+
         self.startm1 = [200, 6200]
         self.startm2 = [288, 105]
         self.startm3 = [1211, 423]
@@ -255,27 +252,6 @@ class ActualGame(Screen):
                                   mummy.the_mummy.x + self.center_x2, 
                                   mummy.the_mummy.y + mummy.the_mummy.height + 5)
                 self.rectm4d = Rect(mummy.the_mummy.x + self.center_x1, 
-                                  mummy.the_mummy.y - 1, 
-                                  mummy.the_mummy.x + self.center_x2, 
-                                  mummy.the_mummy.y + 5)
-            elif mummy == self.mummy5:
-                self.center_y1 = mummy.the_mummy.height/2 - 6
-                self.center_y2 = mummy.the_mummy.height/2 + 6
-                self.rectm5l = Rect(mummy.the_mummy.x - 6, 
-                                  mummy.the_mummy.y + self.center_y1, 
-                                  mummy.the_mummy.x + 4, 
-                                  mummy.the_mummy.y + self.center_y2)
-                self.rectm5r = Rect(mummy.the_mummy.x + mummy.the_mummy.width + 6, 
-                                  mummy.the_mummy.y + self.center_y1, 
-                                  mummy.the_mummy.x + mummy.the_mummy.width + 4, 
-                                  mummy.the_mummy.y + self.center_y2)
-                self.center_x1 = mummy.the_mummy.width/2 - 6
-                self.center_x2 = mummy.the_mummy.width/2 + 6
-                self.rectm5u = Rect(mummy.the_mummy.x + self.center_x1, 
-                                  mummy.the_mummy.y + mummy.the_mummy.height + 1, 
-                                  mummy.the_mummy.x + self.center_x2, 
-                                  mummy.the_mummy.y + mummy.the_mummy.height + 5)
-                self.rectm5d = Rect(mummy.the_mummy.x + self.center_x1, 
                                   mummy.the_mummy.y - 1, 
                                   mummy.the_mummy.x + self.center_x2, 
                                   mummy.the_mummy.y + 5)
@@ -405,18 +381,6 @@ class ActualGame(Screen):
                       
                     if get_rect(rectangles).collides(self.rectm4d):
                         mummy.no_down()
-                elif mummy == self.mummy5:
-                    if get_rect(rectangles).collides(self.rectm5l):
-                        mummy.no_left()
-                
-                    if get_rect(rectangles).collides(self.rectm5r):
-                        mummy.no_right()
-                      
-                    if get_rect(rectangles).collides(self.rectm5u):
-                        mummy.no_up()
-                      
-                    if get_rect(rectangles).collides(self.rectm5d):
-                        mummy.no_down()
             
             if mummy.allowed_up and mummy.going_up:
                 mummy.move_mummy_up(dt)
@@ -508,8 +472,7 @@ class ActualGame(Screen):
         self.mummy3.the_mummy.y = self.startm3[1]
         self.mummy4.the_mummy.x = self.startm4[0]
         self.mummy4.the_mummy.y = self.startm4[1]
-        self.mummy5.the_mummy.x = self.startm5[0]
-        self.mummy5.the_mummy.y = self.startm5[1]
+
         for mummy in self.mummy:
             mummy.the_mummy.visible = False
         pyglet.clock.unschedule(self.unlock_key_gate)
@@ -593,10 +556,8 @@ class ActualGame(Screen):
             self.mummy = list(self.mummy)
             self.mummy.append(self.mummy4)
             self.mummy = set(self.mummy)
-            self.mummy5 = player.Mummy(665, 231, self.tile_batch, self.fg_group, img=pyglet.image.load("res/images/mummy.png"))
-            self.mummy = list(self.mummy)
-            self.mummy.append(self.mummy5)
-            self.mummy = set(self.mummy)
+            for mummies in self.mummy:
+                mummies.speed += 0.2
             pyglet.clock.schedule_once(self.unlock_key_gate, 40.0)
             
     # Unlock the gate if the player has not recently lost a life
