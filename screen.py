@@ -464,17 +464,22 @@ class ActualGame(Screen):
     def reset_all(self):
         self.player.the_player.x = self.start_player[0]
         self.player.the_player.y = self.start_player[1]
-        self.mummy1.the_mummy.x = self.startm1[0]
-        self.mummy1.the_mummy.y = self.startm1[1]
-        self.mummy2.the_mummy.x = self.startm2[0]
-        self.mummy2.the_mummy.y = self.startm2[1]
-        self.mummy3.the_mummy.x = self.startm3[0]
-        self.mummy3.the_mummy.y = self.startm3[1]
-        self.mummy4.the_mummy.x = self.startm4[0]
-        self.mummy4.the_mummy.y = self.startm4[1]
 
         for mummy in self.mummy:
+            if mummy == self.mummy1:
+                self.mummy1.the_mummy.x = self.startm1[0]
+                self.mummy1.the_mummy.y = self.startm1[1]
+            elif mummy == self.mummy2:
+                self.mummy2.the_mummy.x = self.startm2[0]
+                self.mummy2.the_mummy.y = self.startm2[1]
+#             elif mummy == self.mummy3:
+#                 self.mummy3.the_mummy.x = self.startm3[0]
+#                 self.mummy3.the_mummy.y = self.startm3[1]
+#             elif mummy == self.mummy4:
+#                 self.mummy4.the_mummy.x = self.startm4[0]
+#                 self.mummy4.the_mummy.y = self.startm4[1]
             mummy.the_mummy.visible = False
+
         pyglet.clock.unschedule(self.unlock_key_gate)
         for obj in self.f_map.return_keygate():
             if obj.scale < 1:
@@ -530,13 +535,25 @@ class ActualGame(Screen):
             self.interface.revert_all_value()
         if self.level == 0:
             pyglet.clock.schedule_once(self.unlock_key_gate, 20.0)
-        if self.level == 1:
+            self.mummy3 = player.Mummy(-200, -200, self.tile_batch, self.fg_group, img=pyglet.image.load("res/images/mummy.png"))
+            self.mummy = list(self.mummy)
+            self.mummy.append(self.mummy3)
+            self.mummy = set(self.mummy)
+            self.mummy4 = player.Mummy(-230, -740, self.tile_batch, self.fg_group, img=pyglet.image.load("res/images/mummy.png"))
+            self.mummy = list(self.mummy)
+            self.mummy.append(self.mummy4)
+            self.mummy = set(self.mummy)
+        elif self.level == 1:
             self.mummy3 = player.Mummy(1211, 423, self.tile_batch, self.fg_group, img=pyglet.image.load("res/images/mummy.png"))
             self.mummy = list(self.mummy)
             self.mummy.append(self.mummy3)
             self.mummy = set(self.mummy)
+            self.mummy4 = player.Mummy(-230, -740, self.tile_batch, self.fg_group, img=pyglet.image.load("res/images/mummy.png"))
+            self.mummy = list(self.mummy)
+            self.mummy.append(self.mummy4)
+            self.mummy = set(self.mummy)
             pyglet.clock.schedule_once(self.unlock_key_gate, 26.0)
-        if self.level == 2:
+        elif self.level == 2:
             self.mummy3 = player.Mummy(1211, 423, self.tile_batch, self.fg_group, img=pyglet.image.load("res/images/mummy.png"))
             self.mummy = list(self.mummy)
             self.mummy.append(self.mummy3)
@@ -546,7 +563,7 @@ class ActualGame(Screen):
             self.mummy.append(self.mummy4)
             self.mummy = set(self.mummy)
             pyglet.clock.schedule_once(self.unlock_key_gate, 32.0)
-        if self.level == 3:
+        elif self.level == 3:
             # 665 231
             self.mummy3 = player.Mummy(1211, 423, self.tile_batch, self.fg_group, img=pyglet.image.load("res/images/mummy.png"))
             self.mummy = list(self.mummy)
