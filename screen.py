@@ -116,6 +116,8 @@ class ActualGame(Screen):
         pyglet.clock.schedule_interval(self.update_score, 2.0)
         pyglet.clock.schedule_once(self.make_light, 3.0)
         
+        # This is for the initialisation of the rectangles
+        # for the player and the mummys
         self.rectl = 0
         self.rectr = 0
         self.rectu = 0
@@ -137,6 +139,8 @@ class ActualGame(Screen):
         self.rectm4u = 0
         self.rectm4d = 0
 
+        # Stores where the mummys are positioned,
+        # useful for lookups later
         self.startm1 = [200, 6200]
         self.startm2 = [288, 105]
         self.startm3 = [1211, 423]
@@ -147,6 +151,8 @@ class ActualGame(Screen):
         self.on_next_level = False
         self.unlock()
         
+        # Generates rectangles (for collision detection)
+        # for the player
     def gen_rects_player(self, dt):
         self.center_y1 = self.player.the_player.height/2 - 6
         self.center_y2 = self.player.the_player.height/2 + 6
@@ -169,9 +175,12 @@ class ActualGame(Screen):
                           self.player.the_player.x + self.center_x2, 
                           self.player.the_player.y + 5)
 
+        # Generates rectangles for every mummy on screen
+        # for collision detection
     def gen_rects_mummy(self, dt):
+        # Each have different values for their collision boxes
         for mummy in self.mummy:
-            if mummy == self.mummy1:
+            if mummy == self.mummy1: # Mummy 1
                 self.center_y1 = mummy.the_mummy.height/2 - 6
                 self.center_y2 = mummy.the_mummy.height/2 + 6
                 self.rectml = Rect(mummy.the_mummy.x - 6, 
@@ -192,7 +201,8 @@ class ActualGame(Screen):
                                   mummy.the_mummy.y - 1, 
                                   mummy.the_mummy.x + self.center_x2, 
                                   mummy.the_mummy.y + 5)
-            elif mummy == self.mummy2:
+            elif mummy == self.mummy2: # Mummy 2 
+            # self.rectm2l stands for rectangle of mummy 2 left
                 self.center_y1 = mummy.the_mummy.height/2 - 6
                 self.center_y2 = mummy.the_mummy.height/2 + 6
                 self.rectm2l = Rect(mummy.the_mummy.x - 6, 
@@ -213,7 +223,7 @@ class ActualGame(Screen):
                                   mummy.the_mummy.y - 1, 
                                   mummy.the_mummy.x + self.center_x2, 
                                   mummy.the_mummy.y + 5)
-            elif mummy == self.mummy3:
+            elif mummy == self.mummy3: # Mummy 3 
                 self.center_y1 = mummy.the_mummy.height/2 - 6
                 self.center_y2 = mummy.the_mummy.height/2 + 6
                 self.rectm3l = Rect(mummy.the_mummy.x - 6, 
@@ -235,6 +245,7 @@ class ActualGame(Screen):
                                   mummy.the_mummy.x + self.center_x2, 
                                   mummy.the_mummy.y + 5)
             elif mummy == self.mummy4:
+                # remember to keep centering the mummy position
                 self.center_y1 = mummy.the_mummy.height/2 - 6
                 self.center_y2 = mummy.the_mummy.height/2 + 6
                 self.rectm4l = Rect(mummy.the_mummy.x - 6, 
@@ -245,6 +256,7 @@ class ActualGame(Screen):
                                   mummy.the_mummy.y + self.center_y1, 
                                   mummy.the_mummy.x + mummy.the_mummy.width + 4, 
                                   mummy.the_mummy.y + self.center_y2)
+                # And the x position
                 self.center_x1 = mummy.the_mummy.width/2 - 6
                 self.center_x2 = mummy.the_mummy.width/2 + 6
                 self.rectm4u = Rect(mummy.the_mummy.x + self.center_x1, 
@@ -256,6 +268,7 @@ class ActualGame(Screen):
                                   mummy.the_mummy.x + self.center_x2, 
                                   mummy.the_mummy.y + 5)
                 
+        # Makes lights brighter and dimmer
     def make_light(self, dt):
         for torch in self.f_map.return_torches():
             self.torch_sprite = pyglet.sprite.Sprite(self.circle, x=torch.x-10,
@@ -296,6 +309,7 @@ class ActualGame(Screen):
                     self.layout.y = WINDOW_SIZE_Y/4
                     self.game.save(0, 0)
                     return
+                # Then progress on to the next level
                 self.level += 1
                 self.soundplayer.pause()
                 self.f_map.clean_lists()
@@ -328,12 +342,13 @@ class ActualGame(Screen):
             if get_rect(rectangles).collides(self.rectd):
                 self.player.no_down()
                 
-    # Get what the mummies collide with       
+    # Get what the mummies collide with. If the rectangles
+    # collide then disallow the mummys from going in that direction
     def collision_mummy(self, dt):
         for mummy in self.mummy:
             mummy.allow_bools()
             for rectangles in self.f_map.return_sprites():
-                if mummy == self.mummy1:
+                if mummy == self.mummy1: # If the mummy is number 1 then detect
                     if get_rect(rectangles).collides(self.rectml):
                         mummy.no_left()
                 
@@ -357,7 +372,8 @@ class ActualGame(Screen):
                       
                     if get_rect(rectangles).collides(self.rectm2d):
                         mummy.no_down()
-                elif mummy == self.mummy3:
+                elif mummy == self.mummy3: # If the mummy is number 
+                                    # then get the rect
                     if get_rect(rectangles).collides(self.rectm3l):
                         mummy.no_left()
                 
@@ -381,10 +397,13 @@ class ActualGame(Screen):
                       
                     if get_rect(rectangles).collides(self.rectm4d):
                         mummy.no_down()
-            
+            # If the mummy is allowed up and is going up
+            # then keep going up
             if mummy.allowed_up and mummy.going_up:
                 mummy.move_mummy_up(dt)
                 mummy.going_up = True
+            # Basically keep the mummy going in the direction
+            # stops glitchy bugs.
             elif mummy.allowed_right and mummy.going_right:
                 mummy.move_mummy_right(dt)
                 mummy.going_right = True
@@ -395,6 +414,7 @@ class ActualGame(Screen):
                 mummy.move_mummy_left(dt)
                 mummy.going_left = True
                 
+                # If the mummy is not moving go in a random direction
             if not mummy.is_moving(dt):
                 self.randint = randint(0, 4)
                 if self.randint == 0 and mummy.allowed_left:
@@ -480,6 +500,7 @@ class ActualGame(Screen):
 #                 self.mummy4.the_mummy.y = self.startm4[1]
             mummy.the_mummy.visible = False
 
+        # Reset all the values by looping
         pyglet.clock.unschedule(self.unlock_key_gate)
         for obj in self.f_map.return_keygate():
             if obj.scale < 1:
@@ -533,8 +554,9 @@ class ActualGame(Screen):
             self.interface.inject_score(self.score_hold[0])
             self.interface.inject_bonus(self.score_hold[1])
             self.interface.revert_all_value()
-        if self.level == 0:
+        if self.level == 0: # If the level is 0
             pyglet.clock.schedule_once(self.unlock_key_gate, 20.0)
+            # position everything accordingly
             self.mummy3 = player.Mummy(-200, -200, self.tile_batch, self.fg_group, img=pyglet.image.load("res/images/mummy.png"))
             self.mummy = list(self.mummy)
             self.mummy.append(self.mummy3)
@@ -554,6 +576,7 @@ class ActualGame(Screen):
             self.mummy = set(self.mummy)
             pyglet.clock.schedule_once(self.unlock_key_gate, 26.0)
         elif self.level == 2:
+            # introduce new mummies
             self.mummy3 = player.Mummy(1211, 423, self.tile_batch, self.fg_group, img=pyglet.image.load("res/images/mummy.png"))
             self.mummy = list(self.mummy)
             self.mummy.append(self.mummy3)
@@ -564,7 +587,7 @@ class ActualGame(Screen):
             self.mummy = set(self.mummy)
             pyglet.clock.schedule_once(self.unlock_key_gate, 32.0)
         elif self.level == 3:
-            # 665 231
+            # Add more mummies
             self.mummy3 = player.Mummy(1211, 423, self.tile_batch, self.fg_group, img=pyglet.image.load("res/images/mummy.png"))
             self.mummy = list(self.mummy)
             self.mummy.append(self.mummy3)
